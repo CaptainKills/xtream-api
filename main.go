@@ -39,45 +39,45 @@ func main() {
 	client := xtream.NewClient(url, username, password)
 	_, err := client.GetAccountInfo()
 	if err != nil {
-		log.Fatalf("[ERROR] Authentication Failed: %v\n", err)
+		log.Fatalf("[ERROR] Authentication Failed: %q\n", err)
 	}
 	log.Printf("[INFO] Authentication Successful: %s\n", url)
 
 	// Fetch Categories
 	live_categories, err := client.GetLiveStreamCategories()
 	if err != nil {
-		log.Printf("[ERROR] Failed to retrieve LiveStream Categories: %v\n", err)
+		log.Printf("[ERROR] Failed to retrieve LiveStream Categories: %q\n", err)
 	}
 	log.Printf("[INFO] Found %6d Categories for Livestreams\n", len(live_categories))
 
 	movie_categories, err := client.GetMovieCategories()
 	if err != nil {
-		log.Printf("[ERROR] Failed to retrieve Movie Categories: %v\n", err)
+		log.Printf("[ERROR] Failed to retrieve Movie Categories: %q\n", err)
 	}
 	log.Printf("[INFO] Found %6d Categories for Movies\n", len(movie_categories))
 
 	series_categories, err := client.GetSeriesCategories()
 	if err != nil {
-		log.Printf("[ERROR] Failed to retrieve Series Categories: %v\n", err)
+		log.Printf("[ERROR] Failed to retrieve Series Categories: %q\n", err)
 	}
 	log.Printf("[INFO] Found %6d Categories for Series\n", len(series_categories))
 
 	// Fetch Streams
 	livestreams, err := client.GetLiveStreams()
 	if err != nil {
-		log.Printf("[ERROR] Failed to retrieve LiveStreams: %v\n", err)
+		log.Printf("[ERROR] Failed to retrieve LiveStreams: %q\n", err)
 	}
 	log.Printf("[INFO] Found %6d Livestreams\n", len(livestreams))
 
 	movies, err := client.GetMovies()
 	if err != nil {
-		log.Printf("[ERROR] Failed to retrieve Movies: %v\n", err)
+		log.Printf("[ERROR] Failed to retrieve Movies: %q\n", err)
 	}
 	log.Printf("[INFO] Found %6d Movies\n", len(movies))
 
 	series, err := client.GetSeries()
 	if err != nil {
-		log.Printf("[ERROR] Failed to retrieve Series: %v\n", err)
+		log.Printf("[ERROR] Failed to retrieve Series: %q\n", err)
 	}
 	log.Printf("[INFO] Found %6d Series\n", len(series))
 
@@ -90,8 +90,8 @@ func main() {
 	wg.Add(1)
 	go exportMovies(&wg, client)
 
-	wg.Add(1)
-	go exportSeries(&wg, client)
+	// wg.Add(1)
+	// go exportSeries(&wg, client)
 
 	wg.Wait()
 }
@@ -101,7 +101,7 @@ func exportLivestreams(wg *sync.WaitGroup, client *xtream.XtreamClient) {
 
 	err := client.ExportLiveStreams()
 	if err != nil {
-		log.Printf("[ERROR] Unable to export LiveStreams: %v\n", err)
+		log.Printf("[ERROR] Unable to export LiveStreams: %q\n", err)
 	}
 }
 
@@ -110,7 +110,7 @@ func exportMovies(wg *sync.WaitGroup, client *xtream.XtreamClient) {
 
 	err := client.ExportMovies()
 	if err != nil {
-		log.Printf("[ERROR] Unable to export Movies: %v\n", err)
+		log.Printf("[ERROR] Unable to export Movies: %q\n", err)
 	}
 }
 
@@ -119,6 +119,6 @@ func exportSeries(wg *sync.WaitGroup, client *xtream.XtreamClient) {
 
 	err := client.ExportSeries()
 	if err != nil {
-		log.Printf("[ERROR] Unable to export Series: %v\n", err)
+		log.Printf("[ERROR] Unable to export Series: %q\n", err)
 	}
 }

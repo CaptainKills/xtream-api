@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
 )
 
@@ -79,30 +77,6 @@ func NewClient(url string, username string, password string) *XtreamClient {
 	}
 }
 
-func (c *XtreamClient) sendRequest(query string) ([]byte, error) {
-	req, err := http.NewRequest(http.MethodGet, query, nil)
-	if err != nil {
-		return []byte{}, err
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return []byte{}, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return []byte{}, err
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return []byte{}, err
-	}
-
-	return body, nil
-}
-
 func (c *XtreamClient) buildURL(stream string, id int, ext string) (string, error) {
 	protocol := c.account.ServerInfo.Protocol
 	domain := c.account.ServerInfo.URL
@@ -128,7 +102,7 @@ func (c *XtreamClient) GetAccountInfo() (Account, error) {
 	var account Account
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionAccountInfo)
 
-	resp, err := c.sendRequest(query)
+	resp, err := SendRequest(query)
 	if err != nil {
 		return Account{}, err
 	}
@@ -147,7 +121,7 @@ func (c *XtreamClient) GetLiveStreamCategories() ([]Category, error) {
 	var categories []Category
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionLiveCategories)
 
-	resp, err := c.sendRequest(query)
+	resp, err := SendRequest(query)
 	if err != nil {
 		return []Category{}, err
 	}
@@ -166,7 +140,7 @@ func (c *XtreamClient) GetMovieCategories() ([]Category, error) {
 	var categories []Category
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionMovieCategories)
 
-	resp, err := c.sendRequest(query)
+	resp, err := SendRequest(query)
 	if err != nil {
 		return []Category{}, err
 	}
@@ -185,7 +159,7 @@ func (c *XtreamClient) GetSeriesCategories() ([]Category, error) {
 	var categories []Category
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionSeriesCategories)
 
-	resp, err := c.sendRequest(query)
+	resp, err := SendRequest(query)
 	if err != nil {
 		return []Category{}, err
 	}
@@ -204,7 +178,7 @@ func (c *XtreamClient) GetLiveStreams() ([]LiveStream, error) {
 	var livestreams []LiveStream
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionLivestreams)
 
-	resp, err := c.sendRequest(query)
+	resp, err := SendRequest(query)
 	if err != nil {
 		return []LiveStream{}, err
 	}
@@ -223,7 +197,7 @@ func (c *XtreamClient) GetMovies() ([]Movie, error) {
 	var movies []Movie
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionMovies)
 
-	resp, err := c.sendRequest(query)
+	resp, err := SendRequest(query)
 	if err != nil {
 		return []Movie{}, err
 	}
@@ -242,7 +216,7 @@ func (c *XtreamClient) GetSeries() ([]Series, error) {
 	var series []Series
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionSeries)
 
-	resp, err := c.sendRequest(query)
+	resp, err := SendRequest(query)
 	if err != nil {
 		return []Series{}, err
 	}
@@ -262,7 +236,7 @@ func (c *XtreamClient) GetMovieInfo(id int) (MovieInfo, error) {
 	action := fmt.Sprintf(actionMovieInfo, id)
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, action)
 
-	resp, err := c.sendRequest(query)
+	resp, err := SendRequest(query)
 	if err != nil {
 		return MovieInfo{}, err
 	}
@@ -280,7 +254,7 @@ func (c *XtreamClient) GetSeriesInfo(id int) (SeriesInfo, error) {
 	action := fmt.Sprintf(actionSeriesInfo, id)
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, action)
 
-	resp, err := c.sendRequest(query)
+	resp, err := SendRequest(query)
 	if err != nil {
 		return SeriesInfo{}, err
 	}
@@ -294,8 +268,8 @@ func (c *XtreamClient) GetSeriesInfo(id int) (SeriesInfo, error) {
 }
 
 func (c *XtreamClient) ExportLiveStreams() error {
-	counter := 0
-	skipped_images := 0
+	updated_streams := 0
+	updated_images := 0
 
 	if len(c.livestreams) == 0 {
 		return errors.New("No available LiveStreams for export!")
@@ -318,27 +292,28 @@ func (c *XtreamClient) ExportLiveStreams() error {
 			return err
 		}
 
-		updated, err := livestream.Export(directoryLivestreams, url)
+		updated_stream, updated_image, err := livestream.Export(directoryLivestreams, url)
 		if err != nil {
 			return err
 		}
-		counter += updated
+		updated_streams += updated_stream
+		updated_streams += updated_image
 
-		// Output Progress Information every 1%
+		// Output Progress Information
 		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
 			log.Printf("[DEBUG] (LiveStream) Export Progress: %6d / %6d (%6.2f%%)\n", i+1, length, percentage)
 		}
 	}
 
-	log.Printf("[INFO] LiveStreams Processed: %d, LiveStreams Updated: %d, Images Skipped: %d\n", length, counter, skipped_images)
+	log.Printf("[INFO] LiveStreams Processed: %d, LiveStreams Updated: %d, Images Skipped: %d\n", length, updated_streams, updated_images)
 
 	return nil
 }
 
 func (c *XtreamClient) ExportMovies() error {
-	counter := 0
-	skipped_images := 0
+	updated_streams := 0
+	updated_images := 0
 
 	if len(c.movies) == 0 {
 		return errors.New("No available Movies for export!")
@@ -361,27 +336,28 @@ func (c *XtreamClient) ExportMovies() error {
 			return err
 		}
 
-		updated, err := movie.Export(directoryMovies, url)
+		updated_stream, updated_image, err := movie.Export(directoryMovies, url)
 		if err != nil {
 			return err
 		}
-		counter += updated
+		updated_streams += updated_stream
+		updated_images += updated_image
 
-		// Output Progress Information every 1%
+		// Output Progress Information
 		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
 			log.Printf("[DEBUG] (  Movies  ) Export Progress: %6d / %6d (%6.2f%%)\n", i+1, length, percentage)
 		}
 	}
 
-	log.Printf("[INFO] Movies Processed: %d, Movies Updated: %d, Images Skipped: %d\n", length, counter, skipped_images)
+	log.Printf("[INFO] Movies Processed: %d, Movies Updated: %d, Images Updated: %d\n", length, updated_streams, updated_images)
 
 	return nil
 }
 
 func (c *XtreamClient) ExportSeries() error {
-	counter := 0
-	skipped_images := 0
+	updated_streams := 0
+	updated_images := 0
 
 	if len(c.series) == 0 {
 		return errors.New("No available Series for export!")
@@ -403,19 +379,21 @@ func (c *XtreamClient) ExportSeries() error {
 			return err
 		}
 
-		updated, err := show.Export(directorySeries, url)
+		updated_stream, updated_image, err := show.Export(directorySeries, url)
 		if err != nil {
 			return err
 		}
-		counter += updated
+		updated_streams += updated_stream
+		updated_images += updated_image
 
+		// Output Progress Information
 		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
 			log.Printf("[DEBUG] (  Series  ) Export Progress: %6d / %6d (%6.2f%%)\n", i+1, length, percentage)
 		}
 	}
 
-	log.Printf("[INFO] Series Processed: %d, Series Updated: %d, Images Skipped: %d\n", length, counter, skipped_images)
+	log.Printf("[INFO] Series Processed: %d, Series Updated: %d, Images Skipped: %d\n", length, updated_streams, updated_images)
 
 	return nil
 }

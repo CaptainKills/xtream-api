@@ -24,7 +24,7 @@ type Series struct {
 
 type SeriesInfo struct{}
 
-func (s Series) Export(dir string, url string) (int, error) {
+func (s Series) Export(dir string, url string) (int, int, error) {
 	// s.Name = strings.ReplaceAll(s.Name, "/", "_")
 	//
 	// pathDirectory := dir + s.Name
@@ -36,5 +36,5 @@ func (s Series) Export(dir string, url string) (int, error) {
 	// }
 	//
 	// return updated, nil
-	return 0, nil
+	return 0, 0, nil
 }

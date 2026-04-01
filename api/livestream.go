@@ -21,16 +21,24 @@ type LiveStream struct {
 	// HasCatchup          bool `json:"has_catchup"`
 }
 
-func (l LiveStream) Export(dir string, url string) (int, error) {
+func (l LiveStream) Export(dir string, url string) (int, int, error) {
 	l.Name = strings.ReplaceAll(l.Name, "/", "_")
 
 	pathDirectory := dir + l.Name
-	pathFile := dir + l.Name + "/" + l.Name + ".strm"
+	pathFile := pathDirectory + "/" + l.Name + ".strm"
+	pathImage := pathDirectory + "/cover" + GetImageExtension(l.Icon)
 
-	updated, err := WriteStream(pathDirectory, pathFile, url)
+	// Write Stream to File
+	updated_stream, err := WriteStream(pathDirectory, pathFile, url)
 	if err != nil {
-		return updated, err
+		return updated_stream, 0, err
 	}
 
-	return updated, nil
+	// Write Image to File
+	updated_image, err := WriteImage(pathDirectory, pathImage, l.Icon)
+	if err != nil {
+		return updated_stream, updated_image, err
+	}
+
+	return updated_image, updated_image, nil
 }

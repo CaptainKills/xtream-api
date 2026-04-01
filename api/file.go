@@ -26,15 +26,35 @@ func readFile(path string) (string, error) {
 	return data, nil
 }
 
-func writeFile(path string, data string) error {
+func writeFile(path string, data []byte) error {
 	file, err := os.Create(path)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	file.WriteString(data + "\n")
+	file.Write(data)
 	return nil
+}
+
+func GetImageExtension(url string) string {
+	var extension string
+
+	if strings.Contains(url, "png") || strings.Contains(url, "PNG") {
+		extension = ".png"
+	} else if strings.Contains(url, "jpg") || strings.Contains(url, "JPG") {
+		extension = ".jpg"
+	} else if strings.Contains(url, "jpeg") || strings.Contains(url, "JPEG") {
+		extension = ".jpeg"
+	} else if strings.Contains(url, "webp") || strings.Contains(url, "WEBP") {
+		extension = ".webp"
+	} else if strings.Contains(url, "avi") || strings.Contains(url, "AVI") {
+		extension = ".avif"
+	} else {
+		extension = ".jpg"
+	}
+
+	return extension
 }
 
 func WriteStream(dir string, file string, url string) (int, error) {
@@ -43,60 +63,56 @@ func WriteStream(dir string, file string, url string) (int, error) {
 	// Create Subdirectory
 	err := os.Mkdir(dir, 0o750)
 	if err != nil && !os.IsExist(err) {
-		return 0, err
+		return updated, err
+	}
+
+	// Try to read existing .strm file
+	data, err := readFile(file)
+	if err != nil {
+		return updated, err
 	}
 
 	// Check if .strm already exists & has the correct stream
-	data, err := readFile(file)
-	if err != nil {
-		return 0, err
-	}
-
-	// In case .strm does not exist or has the incorrect stream, overwrite file
 	if data != url {
-		err := writeFile(file, url)
+		// In case .strm does not exist or has the incorrect stream, overwrite file
+		err := writeFile(file, []byte(url+"\n"))
 		if err != nil {
-			return 0, err
+			return updated, err
 		}
 		updated = 1
 	}
 
-	// Download Cover Image
-	// if strings.HasPrefix(icon, "http") {
-	// 	image, err := c.sendRequest(icon)
-	// 	if err != nil {
-	// 		// log.Printf("[WARNING] Unable to fetch cover image: %v\n", err)
-	// 		skipped_images++
-	// 	}
-	// 	WriteImage(pathDirectory, icon, image)
-	// }
-
 	return updated, nil
 }
 
-func WriteImage(path string, url string, data []byte) error {
-	var filename string
+func WriteImage(dir string, file string, url string) (int, error) {
+	updated := 0
 
-	if strings.Contains(url, "png") || strings.Contains(url, "PNG") {
-		filename = "cover.png"
-	} else if strings.Contains(url, "jpg") || strings.Contains(url, "JPG") {
-		filename = "cover.jpg"
-	} else if strings.Contains(url, "jpeg") || strings.Contains(url, "JPEG") {
-		filename = "cover.jpeg"
-	} else if strings.Contains(url, "webp") || strings.Contains(url, "WEBP") {
-		filename = "cover.webp"
-	} else if strings.Contains(url, "avi") || strings.Contains(url, "AVI") {
-		filename = "cover.avif"
-	} else {
-		filename = "cover.jpg"
+	// If string is invalid http(s) link, do not update image
+	if !strings.HasPrefix(url, "http") {
+		return 0, nil
 	}
 
-	file, err := os.Create(path + "/" + filename)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
+	// Open existing Image File, if it exists
+	f, err := os.Open(file)
+	f.Close()
 
-	file.Write(data)
-	return nil
+	if err != nil && !os.IsNotExist(err) {
+		return updated, err
+	} else if os.IsNotExist(err) {
+		// In case Image does not exist, download & create file
+		image, err := SendRequest(url)
+		if err != nil {
+			// If image fetch fails, skip image creation
+			return updated, nil
+		}
+
+		err = writeFile(file, image)
+		if err != nil {
+			return updated, err
+		}
+		updated = 1
+	}
+
+	return updated, nil
 }
