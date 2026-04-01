@@ -1,5 +1,9 @@
 package api
 
+import (
+	"strings"
+)
+
 type Movie struct {
 	Added        string `json:"added"`       // time.Time
 	CategoryId   string `json:"category_id"` // int
@@ -20,3 +24,17 @@ type Movie struct {
 }
 
 type MovieInfo struct{}
+
+func (m Movie) Export(dir string, url string) (int, error) {
+	m.Name = strings.ReplaceAll(m.Name, "/", "_")
+
+	pathDirectory := dir + m.Name
+	pathFile := dir + m.Name + "/" + m.Name + ".strm"
+
+	updated, err := WriteStream(pathDirectory, pathFile, url)
+	if err != nil {
+		return updated, err
+	}
+
+	return updated, nil
+}

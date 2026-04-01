@@ -23,3 +23,18 @@ type Series struct {
 }
 
 type SeriesInfo struct{}
+
+func (s Series) Export(dir string, url string) (int, error) {
+	// s.Name = strings.ReplaceAll(s.Name, "/", "_")
+	//
+	// pathDirectory := dir + s.Name
+	// pathFile := dir + s.Name + "/" + s.Name + ".strm"
+	//
+	// updated, err := WriteStream(pathDirectory, pathFile, url)
+	// if err != nil {
+	// 	return updated, err
+	// }
+	//
+	// return updated, nil
+	return 0, nil
+}

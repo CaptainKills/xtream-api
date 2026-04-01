@@ -8,7 +8,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 )
 
 const (
@@ -30,6 +29,8 @@ const (
 	directoryLivestreams = directoryRoot + "live/"
 	directoryMovies      = directoryRoot + "movies/"
 	directorySeries      = directoryRoot + "series/"
+
+	debugPercent = 100
 )
 
 type XtreamClient struct {
@@ -294,6 +295,7 @@ func (c *XtreamClient) GetSeriesInfo(id int) (SeriesInfo, error) {
 
 func (c *XtreamClient) ExportLiveStreams() error {
 	counter := 0
+	skipped_images := 0
 
 	if len(c.livestreams) == 0 {
 		return errors.New("No available LiveStreams for export!")
@@ -310,51 +312,33 @@ func (c *XtreamClient) ExportLiveStreams() error {
 	length := len(c.livestreams)
 	for i := range c.livestreams {
 		livestream := c.livestreams[i]
-		livestream.Name = strings.ReplaceAll(livestream.Name, "/", "_")
-
-		pathDirectory := directoryLivestreams + livestream.Name
-		pathFile := directoryLivestreams + livestream.Name + "/" + livestream.Name + ".strm"
 
 		url, err := c.buildURL(livestream.StreamType, livestream.Id, c.account.UserInfo.AllowedOutputFormats[0])
 		if err != nil {
 			return err
 		}
 
-		// Create Subdirectory
-		err = os.Mkdir(pathDirectory, 0o750)
-		if err != nil && !os.IsExist(err) {
-			return err
-		}
-
-		// Check if .strm already exists & has the correct stream
-		data, err := ReadFile(pathFile)
+		updated, err := livestream.Export(directoryLivestreams, url)
 		if err != nil {
 			return err
 		}
-
-		// In case .strm does not exist or has the incorrect stream, overwrite file
-		if data != url {
-			counter++
-			err := WriteFile(pathFile, url)
-			if err != nil {
-				return err
-			}
-		}
+		counter += updated
 
 		// Output Progress Information every 1%
-		if i%(length/100) == 0 || i == length-1 {
+		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
-			log.Printf("[INFO] Export Progress: %6d / %6d (%6.2f%%)\n", i+1, length, percentage)
+			log.Printf("[DEBUG] (LiveStream) Export Progress: %6d / %6d (%6.2f%%)\n", i+1, length, percentage)
 		}
 	}
 
-	log.Printf("[INFO] LiveStreams Processed: %d, LiveStreams Updated: %d\n", length, counter)
+	log.Printf("[INFO] LiveStreams Processed: %d, LiveStreams Updated: %d, Images Skipped: %d\n", length, counter, skipped_images)
 
 	return nil
 }
 
 func (c *XtreamClient) ExportMovies() error {
 	counter := 0
+	skipped_images := 0
 
 	if len(c.movies) == 0 {
 		return errors.New("No available Movies for export!")
@@ -371,50 +355,34 @@ func (c *XtreamClient) ExportMovies() error {
 	length := len(c.movies)
 	for i := range c.movies {
 		movie := c.movies[i]
-		movie.Name = strings.ReplaceAll(movie.Name, "/", "_")
-
-		pathDirectory := directoryMovies + movie.Name
-		pathFile := directoryMovies + movie.Name + "/" + movie.Name + ".strm"
 
 		url, err := c.buildURL(movie.StreamType, movie.Id, movie.Extension)
 		if err != nil {
 			return err
 		}
 
-		// Create Subdirectory
-		err = os.Mkdir(pathDirectory, 0o750)
-		if err != nil && !os.IsExist(err) {
-			return err
-		}
-
-		// Check if .strm already exists & has the correct stream
-		data, err := ReadFile(pathFile)
+		updated, err := movie.Export(directoryMovies, url)
 		if err != nil {
 			return err
 		}
-
-		// In case .strm does not exist or has the incorrect stream, overwrite file
-		if data != url {
-			counter++
-			err := WriteFile(pathFile, url)
-			if err != nil {
-				return err
-			}
-		}
+		counter += updated
 
 		// Output Progress Information every 1%
-		if i%(length/100) == 0 || i == length-1 {
+		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
-			log.Printf("[INFO] Export Progress: %6d / %6d (%6.2f%%)\n", i+1, length, percentage)
+			log.Printf("[DEBUG] (  Movies  ) Export Progress: %6d / %6d (%6.2f%%)\n", i+1, length, percentage)
 		}
 	}
 
-	log.Printf("[INFO] Movies Processed: %d, Movies Updated: %d\n", length, counter)
+	log.Printf("[INFO] Movies Processed: %d, Movies Updated: %d, Images Skipped: %d\n", length, counter, skipped_images)
 
 	return nil
 }
 
 func (c *XtreamClient) ExportSeries() error {
+	counter := 0
+	skipped_images := 0
+
 	if len(c.series) == 0 {
 		return errors.New("No available Series for export!")
 	}
@@ -426,23 +394,28 @@ func (c *XtreamClient) ExportSeries() error {
 		return err
 	}
 
-	// length := len(c.series)
-	// for i := range c.series {
-	// 	show := c.series[i]
-	//
-	// 	for j := range show.episodes {
-	// 	}
-	//
-	// 	_, err := c.buildURL("series", show.Id, show.Extension)
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	//
-	// 	if i%(length/100) == 0 || i == length-1 {
-	// 		percentage := float64(i) / float64(length) * 100
-	// 		log.Printf("[INFO] Export Progress: %6d / %6d (%6.2f%%)\n", i+1, length, percentage)
-	// 	}
-	// }
+	length := len(c.series)
+	for i := range c.series {
+		show := c.series[i]
+
+		url, err := c.buildURL("series", show.Id, "")
+		if err != nil {
+			return err
+		}
+
+		updated, err := show.Export(directorySeries, url)
+		if err != nil {
+			return err
+		}
+		counter += updated
+
+		if i%(length/debugPercent) == 0 || i == length-1 {
+			percentage := float64(i) / float64(length) * 100
+			log.Printf("[DEBUG] (  Series  ) Export Progress: %6d / %6d (%6.2f%%)\n", i+1, length, percentage)
+		}
+	}
+
+	log.Printf("[INFO] Series Processed: %d, Series Updated: %d, Images Skipped: %d\n", length, counter, skipped_images)
 
 	return nil
 }

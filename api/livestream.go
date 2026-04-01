@@ -1,5 +1,7 @@
 package api
 
+import "strings"
+
 type LiveStream struct {
 	Added        string `json:"added"`       // time.Time
 	CategoryId   string `json:"category_id"` // int
@@ -17,4 +19,18 @@ type LiveStream struct {
 	// TvArchiveDuration string `json:"tv_archive_duration"` // int
 	// CatchupDurationDays int  `json:"catchup_duration_days"`
 	// HasCatchup          bool `json:"has_catchup"`
+}
+
+func (l LiveStream) Export(dir string, url string) (int, error) {
+	l.Name = strings.ReplaceAll(l.Name, "/", "_")
+
+	pathDirectory := dir + l.Name
+	pathFile := dir + l.Name + "/" + l.Name + ".strm"
+
+	updated, err := WriteStream(pathDirectory, pathFile, url)
+	if err != nil {
+		return updated, err
+	}
+
+	return updated, nil
 }
