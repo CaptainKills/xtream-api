@@ -118,13 +118,13 @@ func (c *XtreamClient) GetSeriesInfo(id int) (SeriesInfo, error) {
 	return info, nil
 }
 
-func (s Series) Export(dir string, ur string) (int, error) {
+func (s Series) Export(dir string, ur string, enabledImages bool) (int, error) {
 	s.Name = strings.ReplaceAll(s.Name, "/", "_")
 
 	pathImage := dir + "/cover" + GetImageExtension(s.Cover)
 
 	// Write Image to File
-	updated_image, err := WriteImage(dir, pathImage, s.Cover)
+	updated_image, err := WriteImage(dir, pathImage, s.Cover, enabledImages)
 	if err != nil {
 		return updated_image, err
 	}

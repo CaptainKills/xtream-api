@@ -64,7 +64,7 @@ func (c *XtreamClient) GetMovieInfo(id int) (MovieInfo, error) {
 	return info, nil
 }
 
-func (m Movie) Export(dir string, url string) (int, int, error) {
+func (m Movie) Export(dir string, url string, enableImages bool) (int, int, error) {
 	m.Name = strings.ReplaceAll(m.Name, "/", "_")
 
 	pathDirectory := dir + m.Name
@@ -78,7 +78,7 @@ func (m Movie) Export(dir string, url string) (int, int, error) {
 	}
 
 	// Write Image to File
-	updated_image, err := WriteImage(pathDirectory, pathImage, m.Icon)
+	updated_image, err := WriteImage(pathDirectory, pathImage, m.Icon, enableImages)
 	if err != nil {
 		return updated_stream, updated_image, err
 	}

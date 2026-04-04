@@ -99,7 +99,7 @@ func (c *XtreamClient) buildURL(stream string, id int, ext string) (string, erro
 	return fmt.Sprintf(queryUrl, protocol, domain, port, stream, username, password, id, ext), nil
 }
 
-func (c *XtreamClient) ExportLiveStreams() error {
+func (c *XtreamClient) ExportLiveStreams(enableImages bool) error {
 	updated_streams := 0
 	updated_images := 0
 
@@ -130,7 +130,7 @@ func (c *XtreamClient) ExportLiveStreams() error {
 			return err
 		}
 
-		updated_stream, updated_image, err := livestream.Export(directoryLivestreams, url)
+		updated_stream, updated_image, err := livestream.Export(directoryLivestreams, url, enableImages)
 		if err != nil {
 			return err
 		}
@@ -143,7 +143,7 @@ func (c *XtreamClient) ExportLiveStreams() error {
 	return nil
 }
 
-func (c *XtreamClient) ExportMovies() error {
+func (c *XtreamClient) ExportMovies(enableImages bool) error {
 	updated_streams := 0
 	updated_images := 0
 
@@ -174,7 +174,7 @@ func (c *XtreamClient) ExportMovies() error {
 			return err
 		}
 
-		updated_stream, updated_image, err := movie.Export(directoryMovies, url)
+		updated_stream, updated_image, err := movie.Export(directoryMovies, url, enableImages)
 		if err != nil {
 			return err
 		}
@@ -187,7 +187,7 @@ func (c *XtreamClient) ExportMovies() error {
 	return nil
 }
 
-func (c *XtreamClient) ExportSeries() error {
+func (c *XtreamClient) ExportSeries(enableImages bool) error {
 	updated_streams := 0
 	updated_images := 0
 
@@ -224,7 +224,7 @@ func (c *XtreamClient) ExportSeries() error {
 			return err
 		}
 
-		updated_image, err := show.Export(pathDirectory, show.Cover)
+		updated_image, err := show.Export(pathDirectory, show.Cover, enableImages)
 		if err != nil {
 			return err
 		}

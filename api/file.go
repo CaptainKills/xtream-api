@@ -85,11 +85,11 @@ func WriteStream(dir string, file string, url string) (int, error) {
 	return updated, nil
 }
 
-func WriteImage(dir string, file string, url string) (int, error) {
+func WriteImage(dir string, file string, url string, enabled bool) (int, error) {
 	updated := 0
 
 	// If string is invalid http(s) link, do not update image
-	if !strings.HasPrefix(url, "http") {
+	if !strings.HasPrefix(url, "http") || !enabled {
 		return 0, nil
 	}
 

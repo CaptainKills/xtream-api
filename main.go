@@ -11,6 +11,8 @@ const (
 	ENV_URL      = "XTREAM_URL"
 	ENV_USERNAME = "XTREAM_USERNAME"
 	ENV_PASSWORD = "XTREAM_PASSWORD"
+
+	ENABLE_IMAGES = false
 )
 
 func main() {
@@ -83,7 +85,7 @@ func main() {
 	log.Printf("[INFO] Found %6d Series\n", len(series))
 
 	// Export LiveStreams
-	err = client.ExportLiveStreams()
+	err = client.ExportLiveStreams(ENABLE_IMAGES)
 	if err != nil {
 		log.Printf("[ERROR] Unable to export LiveStreams: %q\n", err)
 	}
@@ -94,7 +96,7 @@ func main() {
 	}
 
 	// Export Movies
-	err = client.ExportMovies()
+	err = client.ExportMovies(ENABLE_IMAGES)
 	if err != nil {
 		log.Printf("[ERROR] Unable to export Movies: %q\n", err)
 	}
@@ -105,7 +107,7 @@ func main() {
 	}
 
 	// Export Series
-	err = client.ExportSeries()
+	err = client.ExportSeries(ENABLE_IMAGES)
 	if err != nil {
 		log.Printf("[ERROR] Unable to export Series: %q\n", err)
 	}

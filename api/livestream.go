@@ -44,7 +44,7 @@ func (c *XtreamClient) GetLiveStreams() ([]LiveStream, error) {
 	return livestreams, nil
 }
 
-func (l LiveStream) Export(dir string, url string) (int, int, error) {
+func (l LiveStream) Export(dir string, url string, enableImages bool) (int, int, error) {
 	l.Name = strings.ReplaceAll(l.Name, "/", "_")
 
 	pathDirectory := dir + l.Name
@@ -58,7 +58,7 @@ func (l LiveStream) Export(dir string, url string) (int, int, error) {
 	}
 
 	// Write Image to File
-	updated_image, err := WriteImage(pathDirectory, pathImage, l.Icon)
+	updated_image, err := WriteImage(pathDirectory, pathImage, l.Icon, enableImages)
 	if err != nil {
 		return updated_stream, updated_image, err
 	}
