@@ -1,6 +1,8 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
 	"strings"
 )
 
@@ -24,6 +26,43 @@ type Movie struct {
 }
 
 type MovieInfo struct{}
+
+func (c *XtreamClient) GetMovies() ([]Movie, error) {
+	var movies []Movie
+	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionMovies)
+
+	resp, err := SendRequest(query)
+	if err != nil {
+		return []Movie{}, err
+	}
+
+	err = json.Unmarshal(resp, &movies)
+	if err != nil {
+		return []Movie{}, err
+	}
+
+	c.movies = movies
+	c.rawMovies = resp
+	return movies, nil
+}
+
+func (c *XtreamClient) GetMovieInfo(id int) (MovieInfo, error) {
+	var info MovieInfo
+	action := fmt.Sprintf(actionMovieInfo, id)
+	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, action)
+
+	resp, err := SendRequest(query)
+	if err != nil {
+		return MovieInfo{}, err
+	}
+
+	err = json.Unmarshal(resp, &info)
+	if err != nil {
+		return MovieInfo{}, err
+	}
+
+	return info, nil
+}
 
 func (m Movie) Export(dir string, url string) (int, int, error) {
 	m.Name = strings.ReplaceAll(m.Name, "/", "_")

@@ -1,5 +1,10 @@
 package api
 
+import (
+	"encoding/json"
+	"fmt"
+)
+
 type Account struct {
 	UserInfo   UserInfo   `json:"user_info"`
 	ServerInfo ServerInfo `json:"server_info"`
@@ -29,4 +34,23 @@ type ServerInfo struct {
 	TimestampNow string `json:timestamp_now` // time.Time
 	Timezone     string `json:"timezone"`
 	URL          string `json:"url"`
+}
+
+func (c *XtreamClient) GetAccountInfo() (Account, error) {
+	var account Account
+	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionAccountInfo)
+
+	resp, err := SendRequest(query)
+	if err != nil {
+		return Account{}, err
+	}
+
+	err = json.Unmarshal(resp, &account)
+	if err != nil {
+		return Account{}, err
+	}
+
+	c.account = account
+	c.rawAccount = resp
+	return account, nil
 }

@@ -1,6 +1,10 @@
 package api
 
-import "strings"
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+)
 
 type Series struct {
 	// BackdropPath   []string `json:"backdrop_path"`
@@ -76,6 +80,43 @@ type Episode struct {
 }
 
 type EpisodeInfo struct{}
+
+func (c *XtreamClient) GetSeries() ([]Series, error) {
+	var series []Series
+	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionSeries)
+
+	resp, err := SendRequest(query)
+	if err != nil {
+		return []Series{}, err
+	}
+
+	err = json.Unmarshal(resp, &series)
+	if err != nil {
+		return []Series{}, err
+	}
+
+	c.series = series
+	c.rawSeries = resp
+	return series, nil
+}
+
+func (c *XtreamClient) GetSeriesInfo(id int) (SeriesInfo, error) {
+	var info SeriesInfo
+	action := fmt.Sprintf(actionSeriesInfo, id)
+	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, action)
+
+	resp, err := SendRequest(query)
+	if err != nil {
+		return SeriesInfo{}, err
+	}
+
+	err = json.Unmarshal(resp, &info)
+	if err != nil {
+		return SeriesInfo{}, err
+	}
+
+	return info, nil
+}
 
 func (s Series) Export(dir string, ur string) (int, error) {
 	s.Name = strings.ReplaceAll(s.Name, "/", "_")

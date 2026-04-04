@@ -1,6 +1,10 @@
 package api
 
-import "strings"
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+)
 
 type LiveStream struct {
 	Added        string `json:"added"`       // time.Time
@@ -19,6 +23,25 @@ type LiveStream struct {
 	// TvArchiveDuration string `json:"tv_archive_duration"` // int
 	// CatchupDurationDays int  `json:"catchup_duration_days"`
 	// HasCatchup          bool `json:"has_catchup"`
+}
+
+func (c *XtreamClient) GetLiveStreams() ([]LiveStream, error) {
+	var livestreams []LiveStream
+	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionLivestreams)
+
+	resp, err := SendRequest(query)
+	if err != nil {
+		return []LiveStream{}, err
+	}
+
+	err = json.Unmarshal(resp, &livestreams)
+	if err != nil {
+		return []LiveStream{}, err
+	}
+
+	c.livestreams = livestreams
+	c.rawLiveStreams = resp
+	return livestreams, nil
 }
 
 func (l LiveStream) Export(dir string, url string) (int, int, error) {
