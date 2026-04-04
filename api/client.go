@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 )
 
 const (
@@ -285,6 +287,12 @@ func (c *XtreamClient) ExportLiveStreams() error {
 
 	length := len(c.livestreams)
 	for i := range c.livestreams {
+		// Output Progress Information
+		if i%(length/debugPercent) == 0 || i == length-1 {
+			percentage := float64(i) / float64(length) * 100
+			log.Printf("[DEBUG] (LiveStream) Export Progress: %6d / %6d (%6.2f%%), STRM: %6d, IMG: %6d\n", i+1, length, percentage, updated_streams, updated_images)
+		}
+
 		livestream := c.livestreams[i]
 
 		url, err := c.buildURL(livestream.StreamType, livestream.Id, c.account.UserInfo.AllowedOutputFormats[0])
@@ -297,16 +305,10 @@ func (c *XtreamClient) ExportLiveStreams() error {
 			return err
 		}
 		updated_streams += updated_stream
-		updated_streams += updated_image
-
-		// Output Progress Information
-		if i%(length/debugPercent) == 0 || i == length-1 {
-			percentage := float64(i) / float64(length) * 100
-			log.Printf("[DEBUG] (LiveStream) Export Progress: %6d / %6d (%6.2f%%)\n", i+1, length, percentage)
-		}
+		updated_images += updated_image
 	}
 
-	log.Printf("[INFO] LiveStreams Processed: %d, LiveStreams Updated: %d, Images Skipped: %d\n", length, updated_streams, updated_images)
+	log.Printf("[INFO] LiveStreams Processed: %d, LiveStreams Updated: %d, Images Updated: %d\n", length, updated_streams, updated_images)
 
 	return nil
 }
@@ -329,6 +331,12 @@ func (c *XtreamClient) ExportMovies() error {
 
 	length := len(c.movies)
 	for i := range c.movies {
+		// Output Progress Information
+		if i%(length/debugPercent) == 0 || i == length-1 {
+			percentage := float64(i) / float64(length) * 100
+			log.Printf("[DEBUG] (  Movies  ) Export Progress: %6d / %6d (%6.2f%%), STRM: %6d, IMG: %6d\n", i+1, length, percentage, updated_streams, updated_images)
+		}
+
 		movie := c.movies[i]
 
 		url, err := c.buildURL(movie.StreamType, movie.Id, movie.Extension)
@@ -342,12 +350,6 @@ func (c *XtreamClient) ExportMovies() error {
 		}
 		updated_streams += updated_stream
 		updated_images += updated_image
-
-		// Output Progress Information
-		if i%(length/debugPercent) == 0 || i == length-1 {
-			percentage := float64(i) / float64(length) * 100
-			log.Printf("[DEBUG] (  Movies  ) Export Progress: %6d / %6d (%6.2f%%)\n", i+1, length, percentage)
-		}
 	}
 
 	log.Printf("[INFO] Movies Processed: %d, Movies Updated: %d, Images Updated: %d\n", length, updated_streams, updated_images)
@@ -372,28 +374,174 @@ func (c *XtreamClient) ExportSeries() error {
 
 	length := len(c.series)
 	for i := range c.series {
-		show := c.series[i]
-
-		url, err := c.buildURL("series", show.Id, "")
-		if err != nil {
-			return err
-		}
-
-		updated_stream, updated_image, err := show.Export(directorySeries, url)
-		if err != nil {
-			return err
-		}
-		updated_streams += updated_stream
-		updated_images += updated_image
-
 		// Output Progress Information
 		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
-			log.Printf("[DEBUG] (  Series  ) Export Progress: %6d / %6d (%6.2f%%)\n", i+1, length, percentage)
+			log.Printf("[DEBUG] (  Series  ) Export Progress: %6d / %6d (%6.2f%%), STRM: %6d, IMG: %6d\n", i+1, length, percentage, updated_streams, updated_images)
+		}
+
+		show := c.series[i]
+		info, err := c.GetSeriesInfo(show.Id)
+		if err != nil {
+			log.Printf("[ERROR] Failed to get Series Info: %q\n", err)
+			continue
+			// return err
+		}
+
+		pathDirectory := directorySeries + show.Name
+		err = os.MkdirAll(pathDirectory, 0o750)
+		if err != nil {
+			return err
+		}
+
+		updated_image, err := show.Export(pathDirectory, show.Cover)
+		if err != nil {
+			return err
+		}
+		updated_images += updated_image
+
+		for j := range info.Seasons {
+			season := info.Seasons[j]
+			directory := pathDirectory + "/" + season.Name
+			err := os.MkdirAll(directory, 0o750)
+			if err != nil {
+				return err
+			}
+
+			index := strconv.Itoa(season.Number)
+			episodes := info.Episodes[index]
+			for k := range episodes {
+				episode := episodes[k]
+
+				id, err := strconv.Atoi(episode.Id)
+				if err != nil {
+					return err
+				}
+
+				url, err := c.buildURL("series", id, episode.Extension)
+				if err != nil {
+					return err
+				}
+
+				updated_stream, err := episode.Export(directory, url)
+				if err != nil {
+					return err
+				}
+
+				updated_streams += updated_stream
+			}
 		}
 	}
 
-	log.Printf("[INFO] Series Processed: %d, Series Updated: %d, Images Skipped: %d\n", length, updated_streams, updated_images)
+	log.Printf("[INFO] Series Processed: %d, Series Updated: %d, Images Updated: %d\n", length, updated_streams, updated_images)
 
+	return nil
+}
+
+func (c *XtreamClient) ValidateLiveStreams() error {
+	total_streams := 0
+	total_covers := 0
+
+	log.Printf("[INFO] Validating LiveStreams...")
+
+	root, err := os.ReadDir(directoryLivestreams)
+	if err != nil {
+		return err
+	}
+
+	for i := range root {
+		dir := root[i]
+
+		if !dir.IsDir() {
+			log.Printf("[WARNING] Found File in Root Directory: %s\n", dir.Name())
+			continue
+		}
+
+		subdir, err := os.ReadDir(directoryLivestreams + dir.Name())
+		if err != nil {
+			return err
+		}
+
+		nr_of_streams := 0
+		nr_of_covers := 0
+
+		for j := range subdir {
+			file := subdir[j]
+
+			if strings.HasSuffix(file.Name(), ".strm") {
+				nr_of_streams++
+				total_streams++
+			}
+
+			if strings.HasPrefix(file.Name(), "cover") {
+				nr_of_covers++
+				total_covers++
+			}
+		}
+
+		if nr_of_streams == 0 || nr_of_streams > 1 || nr_of_covers > 1 {
+			log.Printf("[WARNING] Unexpected Number of Files: STRM=%d, IMG=%d | %s\n", nr_of_streams, nr_of_covers, dir.Name())
+			// TODO: Cleanup outdated covers
+		}
+	}
+
+	log.Printf("[INFO] (LiveStreams) Validated %6d Streams, %6d Covers\n", total_streams, total_covers)
+
+	return nil
+}
+
+func (c *XtreamClient) ValidateMovies() error {
+	total_streams := 0
+	total_covers := 0
+
+	log.Printf("[INFO] Validating Movies...")
+
+	root, err := os.ReadDir(directoryMovies)
+	if err != nil {
+		return err
+	}
+
+	for i := range root {
+		dir := root[i]
+
+		if !dir.IsDir() {
+			log.Printf("[WARNING] Found File in Root Directory: %s\n", dir.Name())
+			continue
+		}
+
+		subdir, err := os.ReadDir(directoryMovies + dir.Name())
+		if err != nil {
+			return err
+		}
+
+		nr_of_streams := 0
+		nr_of_covers := 0
+
+		for j := range subdir {
+			file := subdir[j]
+
+			if strings.HasSuffix(file.Name(), ".strm") {
+				nr_of_streams++
+				total_streams++
+			}
+
+			if strings.HasPrefix(file.Name(), "cover") {
+				nr_of_covers++
+				total_covers++
+			}
+		}
+
+		if nr_of_streams == 0 || nr_of_streams > 1 || nr_of_covers > 1 {
+			log.Printf("[WARNING] Unexpected Number of Files: STRM=%d, IMG=%d | %s\n", nr_of_streams, nr_of_covers, dir.Name())
+			// TODO: Cleanup outdated covers
+		}
+	}
+
+	log.Printf("[INFO] (  Movies  ) Validated %6d Streams, %6d Covers\n", total_streams, total_covers)
+
+	return nil
+}
+
+func (c *XtreamClient) ValidateSeries() error {
 	return nil
 }

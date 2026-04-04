@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"os"
-	"sync"
 
 	xtream "github.com/CaptainKills/xtream-api/api"
 )
@@ -15,6 +14,8 @@ const (
 )
 
 func main() {
+	log.SetOutput(os.Stdout)
+
 	// Environment Variables
 	url := os.Getenv(ENV_URL)
 	if url == "" {
@@ -81,44 +82,36 @@ func main() {
 	}
 	log.Printf("[INFO] Found %6d Series\n", len(series))
 
-	// Export Streams
-	var wg sync.WaitGroup
-
-	wg.Add(1)
-	go exportLivestreams(&wg, client)
-
-	wg.Add(1)
-	go exportMovies(&wg, client)
-
-	// wg.Add(1)
-	// go exportSeries(&wg, client)
-
-	wg.Wait()
-}
-
-func exportLivestreams(wg *sync.WaitGroup, client *xtream.XtreamClient) {
-	defer wg.Done()
-
-	err := client.ExportLiveStreams()
+	// Export LiveStreams
+	err = client.ExportLiveStreams()
 	if err != nil {
 		log.Printf("[ERROR] Unable to export LiveStreams: %q\n", err)
 	}
-}
 
-func exportMovies(wg *sync.WaitGroup, client *xtream.XtreamClient) {
-	defer wg.Done()
+	err = client.ValidateLiveStreams()
+	if err != nil {
+		log.Printf("[ERROR] Unable to validate LiveStreams: %q\n", err)
+	}
 
-	err := client.ExportMovies()
+	// Export Movies
+	err = client.ExportMovies()
 	if err != nil {
 		log.Printf("[ERROR] Unable to export Movies: %q\n", err)
 	}
-}
 
-func exportSeries(wg *sync.WaitGroup, client *xtream.XtreamClient) {
-	defer wg.Done()
+	err = client.ValidateMovies()
+	if err != nil {
+		log.Printf("[ERROR] Unable to validate Movies: %q\n", err)
+	}
 
-	err := client.ExportSeries()
+	// Export Series
+	err = client.ExportSeries()
 	if err != nil {
 		log.Printf("[ERROR] Unable to export Series: %q\n", err)
+	}
+
+	err = client.ValidateSeries()
+	if err != nil {
+		log.Printf("[ERROR] Unable to validate Series: %q\n", err)
 	}
 }

@@ -40,5 +40,5 @@ func (l LiveStream) Export(dir string, url string) (int, int, error) {
 		return updated_stream, updated_image, err
 	}
 
-	return updated_image, updated_image, nil
+	return updated_stream, updated_image, nil
 }
