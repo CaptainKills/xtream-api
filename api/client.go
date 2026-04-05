@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -212,10 +214,15 @@ func (c *XtreamClient) ExportSeries(enableImages bool) error {
 
 		show := c.series[i]
 		info, err := c.GetSeriesInfo(show.Id)
-		if err != nil {
+		if os.IsTimeout(err) {
+			time.Sleep(10 * time.Minute)
+			info, err = c.GetSeriesInfo(show.Id)
+			if err != nil {
+				return err
+			}
+		} else if err != nil {
 			log.Printf("[ERROR] Failed to get Series Info: %q\n", err)
 			continue
-			// return err
 		}
 
 		pathDirectory := directorySeries + show.Name
@@ -284,6 +291,11 @@ func (c *XtreamClient) ValidateLiveStreams() error {
 
 		if !dir.IsDir() {
 			log.Printf("[WARNING] Found File in Root Directory: %s\n", dir.Name())
+
+			err := os.Remove(directorySeries + dir.Name())
+			if err != nil {
+				return err
+			}
 			continue
 		}
 
@@ -311,7 +323,10 @@ func (c *XtreamClient) ValidateLiveStreams() error {
 
 		if nr_of_streams == 0 || nr_of_streams > 1 || nr_of_covers > 1 {
 			log.Printf("[WARNING] Unexpected Number of Files: STRM=%d, IMG=%d | %s\n", nr_of_streams, nr_of_covers, dir.Name())
-			// TODO: Cleanup outdated covers
+			err := c.cleanDirectory(directoryLivestreams+dir.Name(), subdir)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -336,6 +351,11 @@ func (c *XtreamClient) ValidateMovies() error {
 
 		if !dir.IsDir() {
 			log.Printf("[WARNING] Found File in Root Directory: %s\n", dir.Name())
+
+			err := os.Remove(directorySeries + dir.Name())
+			if err != nil {
+				return err
+			}
 			continue
 		}
 
@@ -363,7 +383,10 @@ func (c *XtreamClient) ValidateMovies() error {
 
 		if nr_of_streams == 0 || nr_of_streams > 1 || nr_of_covers > 1 {
 			log.Printf("[WARNING] Unexpected Number of Files: STRM=%d, IMG=%d | %s\n", nr_of_streams, nr_of_covers, dir.Name())
-			// TODO: Cleanup outdated covers
+			err := c.cleanDirectory(directoryMovies+dir.Name(), subdir)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -373,5 +396,150 @@ func (c *XtreamClient) ValidateMovies() error {
 }
 
 func (c *XtreamClient) ValidateSeries() error {
+	total_streams := 0
+	total_covers := 0
+
+	log.Printf("[INFO] Validating Series...")
+
+	root, err := os.ReadDir(directorySeries)
+	if err != nil {
+		return err
+	}
+
+	for i := range root {
+		dir := root[i]
+
+		if !dir.IsDir() {
+			log.Printf("[WARNING] Found File in Root Directory: %s\n", dir.Name())
+
+			err := os.Remove(directorySeries + dir.Name())
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
+		subdir, err := os.ReadDir(directorySeries + dir.Name())
+		if err != nil {
+			return err
+		}
+
+		nr_of_streams := 0
+		nr_of_covers := 0
+
+		for j := range subdir {
+			file := subdir[j]
+
+			// if strings.HasSuffix(file.Name(), ".strm") {
+			// 	nr_of_streams++
+			// 	total_streams++
+			// }
+
+			if strings.HasPrefix(file.Name(), "cover") {
+				nr_of_covers++
+				total_covers++
+			}
+		}
+
+		if nr_of_covers > 1 {
+			log.Printf("[WARNING] Unexpected Number of Files: STRM=%d, IMG=%d | %s\n", nr_of_streams, nr_of_covers, dir.Name())
+			err := c.cleanDirectory(directorySeries+dir.Name(), subdir)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	log.Printf("[INFO] (  Series  ) Validated %6d Streams, %6d Covers\n", total_streams, total_covers)
+
+	return nil
+}
+
+func (c *XtreamClient) cleanDirectory(root string, dir []os.DirEntry) error {
+	streams := []os.DirEntry{}
+	images := []os.DirEntry{}
+
+	for i := range dir {
+		file := dir[i]
+
+		if strings.HasSuffix(file.Name(), ".strm") {
+			streams = append(streams, file)
+		}
+
+		if strings.HasPrefix(file.Name(), "cover") {
+			images = append(images, file)
+		}
+	}
+
+	deletedStreams := 0
+	if len(streams) > 1 {
+		newestStream := images[0]
+		newestInfo, err := os.Stat(root + "/" + newestStream.Name())
+		if err != nil {
+			return err
+		}
+		newestModtime := newestInfo.ModTime()
+
+		for i := range streams {
+			stream := streams[i]
+
+			info, err := os.Stat(root + "/" + stream.Name())
+			if err != nil {
+				return err
+			}
+			modtime := info.ModTime()
+
+			if modtime.After(newestModtime) {
+				err := os.Remove(root + "/" + newestStream.Name())
+				if err != nil {
+					return err
+				}
+
+				newestStream = stream
+				newestModtime = modtime
+				deletedStreams++
+			}
+		}
+	}
+
+	deletedImages := 0
+	if len(images) > 1 {
+		newestImage := images[0]
+		newestInfo, err := os.Stat(root + "/" + newestImage.Name())
+		if err != nil {
+			return err
+		}
+		newestModtime := newestInfo.ModTime()
+
+		for i := range images {
+			image := images[i]
+
+			info, err := os.Stat(root + "/" + image.Name())
+			if err != nil {
+				return err
+			}
+			modtime := info.ModTime()
+
+			if modtime.After(newestModtime) {
+				err := os.Remove(root + "/" + newestImage.Name())
+				if err != nil {
+					return err
+				}
+
+				newestImage = image
+				newestModtime = modtime
+				deletedImages++
+			} else if modtime.Before(newestModtime) {
+				err := os.Remove(root + "/" + image.Name())
+				if err != nil {
+					return err
+				}
+				deletedImages++
+			}
+		}
+	}
+
+	log.Printf("[DEBUG] Cleaned %d Streams, %d Images\n", deletedStreams, deletedImages)
+
 	return nil
 }

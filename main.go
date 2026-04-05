@@ -85,10 +85,10 @@ func main() {
 	log.Printf("[INFO] Found %6d Series\n", len(series))
 
 	// Export LiveStreams
-	err = client.ExportLiveStreams(ENABLE_IMAGES)
-	if err != nil {
-		log.Printf("[ERROR] Unable to export LiveStreams: %q\n", err)
-	}
+	// err = client.ExportLiveStreams(ENABLE_IMAGES)
+	// if err != nil {
+	// 	log.Printf("[ERROR] Unable to export LiveStreams: %q\n", err)
+	// }
 
 	err = client.ValidateLiveStreams()
 	if err != nil {
@@ -96,10 +96,10 @@ func main() {
 	}
 
 	// Export Movies
-	err = client.ExportMovies(ENABLE_IMAGES)
-	if err != nil {
-		log.Printf("[ERROR] Unable to export Movies: %q\n", err)
-	}
+	// err = client.ExportMovies(ENABLE_IMAGES)
+	// if err != nil {
+	// 	log.Printf("[ERROR] Unable to export Movies: %q\n", err)
+	// }
 
 	err = client.ValidateMovies()
 	if err != nil {
@@ -107,10 +107,10 @@ func main() {
 	}
 
 	// Export Series
-	err = client.ExportSeries(ENABLE_IMAGES)
-	if err != nil {
-		log.Printf("[ERROR] Unable to export Series: %q\n", err)
-	}
+	// err = client.ExportSeries(ENABLE_IMAGES)
+	// if err != nil {
+	// 	log.Printf("[ERROR] Unable to export Series: %q\n", err)
+	// }
 
 	err = client.ValidateSeries()
 	if err != nil {
