@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 
 	xtream "github.com/CaptainKills/xtream-api/api"
 )
@@ -11,9 +12,10 @@ const (
 	ENV_URL      = "XTREAM_URL"
 	ENV_USERNAME = "XTREAM_USERNAME"
 	ENV_PASSWORD = "XTREAM_PASSWORD"
-
-	ENABLE_IMAGES = false
+	ENV_IMAGES   = "XTREAM_IMAGES"
 )
+
+var ENABLE_IMAGES bool = true
 
 func main() {
 	log.SetOutput(os.Stdout)
@@ -34,86 +36,105 @@ func main() {
 		log.Printf("[ERROR] '%s' Environment Variable Not Specified!\n", ENV_PASSWORD)
 	}
 
+	images := os.Getenv(ENV_IMAGES)
+	if images == "true" {
+		ENABLE_IMAGES = true
+	} else if images == "false" {
+		ENABLE_IMAGES = false
+	}
+
 	if url == "" || username == "" || password == "" {
 		log.Fatalln("[ERROR] Missing Environment Variables! Exiting Program...")
 	}
 
-	// Xtream Client
-	client := xtream.NewClient(url, username, password)
-	_, err := client.GetAccountInfo()
-	if err != nil {
-		log.Fatalf("[ERROR] Authentication Failed: %q\n", err)
-	}
-	log.Printf("[INFO] Authentication Successful: %s\n", url)
+	for {
+		start := time.Now()
 
-	// Fetch Categories
-	live_categories, err := client.GetLiveStreamCategories()
-	if err != nil {
-		log.Printf("[ERROR] Failed to retrieve LiveStream Categories: %q\n", err)
-	}
-	log.Printf("[INFO] Found %6d Categories for Livestreams\n", len(live_categories))
+		// Xtream Client
+		client := xtream.NewClient(url, username, password)
+		_, err := client.GetAccountInfo()
+		if err != nil {
+			log.Fatalf("[ERROR] Authentication Failed: %q\n", err)
+		}
+		log.Printf("[INFO] Authentication Successful: %s\n", url)
 
-	movie_categories, err := client.GetMovieCategories()
-	if err != nil {
-		log.Printf("[ERROR] Failed to retrieve Movie Categories: %q\n", err)
-	}
-	log.Printf("[INFO] Found %6d Categories for Movies\n", len(movie_categories))
+		// Fetch Categories
+		live_categories, err := client.GetLiveStreamCategories()
+		if err != nil {
+			log.Printf("[ERROR] Failed to retrieve LiveStream Categories: %q\n", err)
+		}
+		log.Printf("[INFO] Found %6d Categories for Livestreams\n", len(live_categories))
 
-	series_categories, err := client.GetSeriesCategories()
-	if err != nil {
-		log.Printf("[ERROR] Failed to retrieve Series Categories: %q\n", err)
-	}
-	log.Printf("[INFO] Found %6d Categories for Series\n", len(series_categories))
+		movie_categories, err := client.GetMovieCategories()
+		if err != nil {
+			log.Printf("[ERROR] Failed to retrieve Movie Categories: %q\n", err)
+		}
+		log.Printf("[INFO] Found %6d Categories for Movies\n", len(movie_categories))
 
-	// Fetch Streams
-	livestreams, err := client.GetLiveStreams()
-	if err != nil {
-		log.Printf("[ERROR] Failed to retrieve LiveStreams: %q\n", err)
-	}
-	log.Printf("[INFO] Found %6d Livestreams\n", len(livestreams))
+		series_categories, err := client.GetSeriesCategories()
+		if err != nil {
+			log.Printf("[ERROR] Failed to retrieve Series Categories: %q\n", err)
+		}
+		log.Printf("[INFO] Found %6d Categories for Series\n", len(series_categories))
 
-	movies, err := client.GetMovies()
-	if err != nil {
-		log.Printf("[ERROR] Failed to retrieve Movies: %q\n", err)
-	}
-	log.Printf("[INFO] Found %6d Movies\n", len(movies))
+		// Fetch Streams
+		livestreams, err := client.GetLiveStreams()
+		if err != nil {
+			log.Printf("[ERROR] Failed to retrieve LiveStreams: %q\n", err)
+		}
+		log.Printf("[INFO] Found %6d Livestreams\n", len(livestreams))
 
-	series, err := client.GetSeries()
-	if err != nil {
-		log.Printf("[ERROR] Failed to retrieve Series: %q\n", err)
-	}
-	log.Printf("[INFO] Found %6d Series\n", len(series))
+		movies, err := client.GetMovies()
+		if err != nil {
+			log.Printf("[ERROR] Failed to retrieve Movies: %q\n", err)
+		}
+		log.Printf("[INFO] Found %6d Movies\n", len(movies))
 
-	// Export LiveStreams
-	// err = client.ExportLiveStreams(ENABLE_IMAGES)
-	// if err != nil {
-	// 	log.Printf("[ERROR] Unable to export LiveStreams: %q\n", err)
-	// }
+		series, err := client.GetSeries()
+		if err != nil {
+			log.Printf("[ERROR] Failed to retrieve Series: %q\n", err)
+		}
+		log.Printf("[INFO] Found %6d Series\n", len(series))
 
-	err = client.ValidateLiveStreams()
-	if err != nil {
-		log.Printf("[ERROR] Unable to validate LiveStreams: %q\n", err)
-	}
+		// Export LiveStreams
+		err = client.ExportLiveStreams(ENABLE_IMAGES)
+		if err != nil {
+			log.Printf("[ERROR] Unable to export LiveStreams: %q\n", err)
+		}
 
-	// Export Movies
-	// err = client.ExportMovies(ENABLE_IMAGES)
-	// if err != nil {
-	// 	log.Printf("[ERROR] Unable to export Movies: %q\n", err)
-	// }
+		err = client.ValidateLiveStreams()
+		if err != nil {
+			log.Printf("[ERROR] Unable to validate LiveStreams: %q\n", err)
+		}
 
-	err = client.ValidateMovies()
-	if err != nil {
-		log.Printf("[ERROR] Unable to validate Movies: %q\n", err)
-	}
+		// Export Movies
+		err = client.ExportMovies(ENABLE_IMAGES)
+		if err != nil {
+			log.Printf("[ERROR] Unable to export Movies: %q\n", err)
+		}
 
-	// Export Series
-	// err = client.ExportSeries(ENABLE_IMAGES)
-	// if err != nil {
-	// 	log.Printf("[ERROR] Unable to export Series: %q\n", err)
-	// }
+		err = client.ValidateMovies()
+		if err != nil {
+			log.Printf("[ERROR] Unable to validate Movies: %q\n", err)
+		}
 
-	err = client.ValidateSeries()
-	if err != nil {
-		log.Printf("[ERROR] Unable to validate Series: %q\n", err)
+		// Export Series
+		err = client.ExportSeries(ENABLE_IMAGES)
+		if err != nil {
+			log.Printf("[ERROR] Unable to export Series: %q\n", err)
+		}
+
+		err = client.ValidateSeries()
+		if err != nil {
+			log.Printf("[ERROR] Unable to validate Series: %q\n", err)
+		}
+
+		// Wait until next run
+		end := time.Now()
+		diff := end.Sub(start)
+		next := time.Now().Add(24 * time.Hour)
+
+		log.Printf("[INFO] Run Duration: %s. Next run scheduled at: %s\n", diff.String(), next.String())
+		time.Sleep(24 * time.Hour)
 	}
 }

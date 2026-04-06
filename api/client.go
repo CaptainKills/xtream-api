@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -215,7 +214,9 @@ func (c *XtreamClient) ExportSeries(enableImages bool) error {
 		show := c.series[i]
 		info, err := c.GetSeriesInfo(show.Id)
 		if os.IsTimeout(err) {
+			log.Println("[WARNING] Idleing for 10 Minutes...")
 			time.Sleep(10 * time.Minute)
+
 			info, err = c.GetSeriesInfo(show.Id)
 			if err != nil {
 				return err
