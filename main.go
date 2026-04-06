@@ -37,10 +37,13 @@ func main() {
 	}
 
 	images := os.Getenv(ENV_IMAGES)
-	if images == "true" {
+	switch images {
+	case "true":
 		ENABLE_IMAGES = true
-	} else if images == "false" {
+	case "false":
 		ENABLE_IMAGES = false
+	default:
+		ENABLE_IMAGES = true
 	}
 
 	if url == "" || username == "" || password == "" {
