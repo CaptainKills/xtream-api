@@ -40,7 +40,6 @@ func (c *XtreamClient) GetLiveStreams() ([]LiveStream, error) {
 	}
 
 	c.livestreams = livestreams
-	c.rawLiveStreams = resp
 	return livestreams, nil
 }
 

@@ -96,7 +96,6 @@ func (c *XtreamClient) GetSeries() ([]Series, error) {
 	}
 
 	c.series = series
-	c.rawSeries = resp
 	return series, nil
 }
 

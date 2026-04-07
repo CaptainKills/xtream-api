@@ -46,16 +46,10 @@ type XtreamClient struct {
 	movies           []Movie
 	series           []Series
 
-	rawAccount          []byte
-	rawLiveCategories   []byte
-	rawMovieCategories  []byte
-	rawSeriesCategories []byte
-	rawLiveStreams      []byte
-	rawMovies           []byte
-	rawSeries           []byte
+	enableImages bool
 }
 
-func NewClient(url string, username string, password string) *XtreamClient {
+func NewClient(url string, username string, password string, enableImages bool) *XtreamClient {
 	return &XtreamClient{
 		url:      url,
 		username: username,
@@ -69,13 +63,7 @@ func NewClient(url string, username string, password string) *XtreamClient {
 		movies:           []Movie{},
 		series:           []Series{},
 
-		rawAccount:          []byte{},
-		rawLiveCategories:   []byte{},
-		rawMovieCategories:  []byte{},
-		rawSeriesCategories: []byte{},
-		rawLiveStreams:      []byte{},
-		rawMovies:           []byte{},
-		rawSeries:           []byte{},
+		enableImages: enableImages,
 	}
 }
 
@@ -100,7 +88,7 @@ func (c *XtreamClient) buildURL(stream string, id int, ext string) (string, erro
 	return fmt.Sprintf(queryUrl, protocol, domain, port, stream, username, password, id, ext), nil
 }
 
-func (c *XtreamClient) ExportLiveStreams(enableImages bool) error {
+func (c *XtreamClient) ExportLiveStreams() error {
 	updated_streams := 0
 	updated_images := 0
 
@@ -131,7 +119,7 @@ func (c *XtreamClient) ExportLiveStreams(enableImages bool) error {
 			return err
 		}
 
-		updated_stream, updated_image, err := livestream.Export(directoryLivestreams, url, enableImages)
+		updated_stream, updated_image, err := livestream.Export(directoryLivestreams, url, c.enableImages)
 		if err != nil {
 			return err
 		}
@@ -144,7 +132,7 @@ func (c *XtreamClient) ExportLiveStreams(enableImages bool) error {
 	return nil
 }
 
-func (c *XtreamClient) ExportMovies(enableImages bool) error {
+func (c *XtreamClient) ExportMovies() error {
 	updated_streams := 0
 	updated_images := 0
 
@@ -175,7 +163,7 @@ func (c *XtreamClient) ExportMovies(enableImages bool) error {
 			return err
 		}
 
-		updated_stream, updated_image, err := movie.Export(directoryMovies, url, enableImages)
+		updated_stream, updated_image, err := movie.Export(directoryMovies, url, c.enableImages)
 		if err != nil {
 			return err
 		}
@@ -188,7 +176,7 @@ func (c *XtreamClient) ExportMovies(enableImages bool) error {
 	return nil
 }
 
-func (c *XtreamClient) ExportSeries(enableImages bool) error {
+func (c *XtreamClient) ExportSeries() error {
 	updated_streams := 0
 	updated_images := 0
 
@@ -232,7 +220,7 @@ func (c *XtreamClient) ExportSeries(enableImages bool) error {
 			return err
 		}
 
-		updated_image, err := show.Export(pathDirectory, show.Cover, enableImages)
+		updated_image, err := show.Export(pathDirectory, show.Cover, c.enableImages)
 		if err != nil {
 			return err
 		}

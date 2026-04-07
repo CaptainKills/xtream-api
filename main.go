@@ -42,8 +42,6 @@ func main() {
 		ENABLE_IMAGES = true
 	case "false":
 		ENABLE_IMAGES = false
-	default:
-		ENABLE_IMAGES = true
 	}
 
 	if url == "" || username == "" || password == "" {
@@ -54,7 +52,7 @@ func main() {
 		start := time.Now()
 
 		// Xtream Client
-		client := xtream.NewClient(url, username, password)
+		client := xtream.NewClient(url, username, password, ENABLE_IMAGES)
 		_, err := client.GetAccountInfo()
 		if err != nil {
 			log.Fatalf("[ERROR] Authentication Failed: %v\n", err)
@@ -100,7 +98,7 @@ func main() {
 		log.Printf("[INFO] Found %6d Series\n", len(series))
 
 		// Export LiveStreams
-		err = client.ExportLiveStreams(ENABLE_IMAGES)
+		err = client.ExportLiveStreams()
 		if err != nil {
 			log.Printf("[ERROR] Unable to export LiveStreams: %v\n", err)
 		}
@@ -111,7 +109,7 @@ func main() {
 		}
 
 		// Export Movies
-		err = client.ExportMovies(ENABLE_IMAGES)
+		err = client.ExportMovies()
 		if err != nil {
 			log.Printf("[ERROR] Unable to export Movies: %v\n", err)
 		}
@@ -122,7 +120,7 @@ func main() {
 		}
 
 		// Export Series
-		err = client.ExportSeries(ENABLE_IMAGES)
+		err = client.ExportSeries()
 		if err != nil {
 			log.Printf("[ERROR] Unable to export Series: %v\n", err)
 		}

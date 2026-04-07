@@ -42,7 +42,6 @@ func (c *XtreamClient) GetMovies() ([]Movie, error) {
 	}
 
 	c.movies = movies
-	c.rawMovies = resp
 	return movies, nil
 }
 

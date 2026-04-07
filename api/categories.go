@@ -26,7 +26,6 @@ func (c *XtreamClient) GetLiveStreamCategories() ([]Category, error) {
 	}
 
 	c.liveCategories = categories
-	c.rawLiveCategories = resp
 	return categories, nil
 }
 
@@ -45,7 +44,6 @@ func (c *XtreamClient) GetMovieCategories() ([]Category, error) {
 	}
 
 	c.movieCategories = categories
-	c.rawMovieCategories = resp
 	return categories, nil
 }
 
@@ -64,6 +62,5 @@ func (c *XtreamClient) GetSeriesCategories() ([]Category, error) {
 	}
 
 	c.seriesCategories = categories
-	c.rawSeriesCategories = resp
 	return categories, nil
 }

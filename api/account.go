@@ -51,6 +51,5 @@ func (c *XtreamClient) GetAccountInfo() (Account, error) {
 	}
 
 	c.account = account
-	c.rawAccount = resp
 	return account, nil
 }
