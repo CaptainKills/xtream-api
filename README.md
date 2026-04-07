@@ -6,12 +6,12 @@ These files can be used to import into Jellyfin or Plex in order to create your 
 
 ## Environment Variables
 
-| **Variables**      | **Description**                                                      | **Default** |
-| ------------------ | -------------------------------------------------------------------- | ----------- |
-| `XTREAM_URL`       | The URL used for fetching IPTV streams, in the form of `http/https`. | ""          |
-| `XTREAM_USERNAME`  | The Username used to log in to the IPTV service.                     | ""          |
-| `XTREAM_PASSWORD`  | The Password used to log in to the IPTV service.                     | ""          | 
-| `XTREAM_IMAGES`    | Whether the tool should download images alongside stream file.       | `true`      |
+| **Variables**      | **Description**                                                | **Default** |
+| ------------------ | -------------------------------------------------------------- | ----------- |
+| `XTREAM_URL`       | The URL used for fetching IPTV streams.                        | ""          |
+| `XTREAM_USERNAME`  | The Username used to log in to the IPTV service.               | ""          |
+| `XTREAM_PASSWORD`  | The Password used to log in to the IPTV service.               | ""          | 
+| `XTREAM_IMAGES`    | Whether the tool should download images alongside stream file. | `true`      |
 
 ## Docker Compose
 
@@ -20,16 +20,16 @@ Here is an example of how to use this tool as a docker container, using a docker
 ```docker-compose
 ---
 services:
-  xtream:
+  xtream-api:
     container_name: xtream-api
     image: captainkills/xtream-api:latest
-    environemt:
-      - XTREAM_URL="https://..."
-      - XTREAM_USERNAME="username"
-      - XTREAM_PASSWORD="password"
+    environment:
+      - XTREAM_URL=...                    # Change to your IPTV URL
+      - XTREAM_USERNAME=...               # Change to your IPTV Username
+      - XTREAM_PASSWORD=...               # Change to your IPTV Password
     volumes:
       - /etc/localtime:/etc/localtime:ro
-      - /path/to/media:/media
+      - /path/to/media:/media             # Change to your desired media directory on Host
     restart: unless-stopped
 ```
 
