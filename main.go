@@ -134,10 +134,10 @@ func main() {
 
 		// Wait until next run
 		end := time.Now()
-		diff := end.Sub(start)
-		next := time.Now().Add(24 * time.Hour)
+		diff := end.Sub(start).Round(time.Millisecond)
+		next := start.Add(24 * time.Hour)
 
-		log.Printf("[INFO] Run Duration: %s. Next run scheduled at: %s\n", diff.String(), next.String())
+		log.Printf("[INFO] Run Duration: %s. Next run scheduled at: %s\n", diff.String(), next.Format(time.DateTime))
 		time.Sleep(24 * time.Hour)
 	}
 }
