@@ -104,7 +104,7 @@ func WriteImage(dir string, file string, url string, enabled bool) (int, error) 
 		image, err := SendRequest(url)
 		if err != nil {
 			// If image fetch fails, skip image creation
-			return updated, nil
+			return updated, err
 		}
 
 		err = writeFile(file, image)
