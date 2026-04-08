@@ -116,12 +116,12 @@ func (c *XtreamClient) ExportLiveStreams() error {
 
 		url, err := c.buildURL(livestream.StreamType, livestream.Id, c.account.UserInfo.AllowedOutputFormats[0])
 		if err != nil {
-			return err
+			return fmt.Errorf("(%d) %w", livestream.Id, err)
 		}
 
 		updated_stream, updated_image, err := livestream.Export(directoryLivestreams, url, c.enableImages)
 		if err != nil {
-			return err
+			return fmt.Errorf("(%d) %w", livestream.Id, err)
 		}
 		updated_streams += updated_stream
 		updated_images += updated_image
@@ -160,12 +160,12 @@ func (c *XtreamClient) ExportMovies() error {
 
 		url, err := c.buildURL(movie.StreamType, movie.Id, movie.Extension)
 		if err != nil {
-			return err
+			return fmt.Errorf("(%d) %w", movie.Id, err)
 		}
 
 		updated_stream, updated_image, err := movie.Export(directoryMovies, url, c.enableImages)
 		if err != nil {
-			return err
+			return fmt.Errorf("(%d) %w", movie.Id, err)
 		}
 		updated_streams += updated_stream
 		updated_images += updated_image
@@ -207,22 +207,22 @@ func (c *XtreamClient) ExportSeries() error {
 
 			info, err = c.GetSeriesInfo(show.Id)
 			if err != nil {
-				return err
+				return fmt.Errorf("(%d) %w", show.Id, err)
 			}
 		} else if err != nil {
-			log.Printf("[ERROR] Failed to get Series Info: %q\n", err)
+			log.Printf("[ERROR] Failed to get Series Info (%d): %q\n", show.Id, err)
 			continue
 		}
 
 		pathDirectory := directorySeries + show.Name
 		err = os.MkdirAll(pathDirectory, 0o750)
 		if err != nil {
-			return err
+			return fmt.Errorf("(%d) %w", show.Id, err)
 		}
 
 		updated_image, err := show.Export(pathDirectory, show.Cover, c.enableImages)
 		if err != nil {
-			return err
+			return fmt.Errorf("(%d) %w", show.Id, err)
 		}
 		updated_images += updated_image
 
@@ -231,7 +231,7 @@ func (c *XtreamClient) ExportSeries() error {
 			directory := pathDirectory + "/" + season.Name
 			err := os.MkdirAll(directory, 0o750)
 			if err != nil {
-				return err
+				return fmt.Errorf("(%d) %w", show.Id, err)
 			}
 
 			index := strconv.Itoa(season.Number)
@@ -241,17 +241,17 @@ func (c *XtreamClient) ExportSeries() error {
 
 				id, err := strconv.Atoi(episode.Id)
 				if err != nil {
-					return err
+					return fmt.Errorf("(%d) %w", show.Id, err)
 				}
 
 				url, err := c.buildURL("series", id, episode.Extension)
 				if err != nil {
-					return err
+					return fmt.Errorf("(%d) %w", show.Id, err)
 				}
 
 				updated_stream, err := episode.Export(directory, url)
 				if err != nil {
-					return err
+					return fmt.Errorf("(%d) %w", show.Id, err)
 				}
 
 				updated_streams += updated_stream
