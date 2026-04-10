@@ -27,22 +27,40 @@ type Movie struct {
 
 type MovieInfo struct{}
 
-func (c *XtreamClient) GetMovies() ([]Movie, error) {
+func (c *XtreamClient) GetMovies() (map[int]Movie, error) {
 	var movies []Movie
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionMovies)
 
+	// Fetch Movies
 	resp, err := SendRequest(query)
 	if err != nil {
-		return []Movie{}, err
+		return map[int]Movie{}, err
 	}
 
 	err = json.Unmarshal(resp, &movies)
 	if err != nil {
-		return []Movie{}, err
+		return map[int]Movie{}, err
 	}
 
-	c.movies = movies
-	return movies, nil
+	// Filter Banned Movies
+	for i := range movies {
+		allowed := true
+		movie := movies[i]
+
+		for j := range movie.CategoryIds {
+			id := movie.CategoryIds[j]
+
+			if _, ok := c.movieCategories[id]; !ok {
+				allowed = false
+			}
+		}
+
+		if allowed {
+			c.movies[movie.Id] = movie
+		}
+	}
+
+	return c.movies, nil
 }
 
 func (c *XtreamClient) GetMovieInfo(id int) (MovieInfo, error) {

@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 type Category struct {
@@ -11,56 +13,116 @@ type Category struct {
 	Parent int    `json:"parent_id"`
 }
 
-func (c *XtreamClient) GetLiveStreamCategories() ([]Category, error) {
+func (c *XtreamClient) GetLiveStreamCategories() (map[int]Category, error) {
 	var categories []Category
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionLiveCategories)
 
+	// Fetch Categories
 	resp, err := SendRequest(query)
 	if err != nil {
-		return []Category{}, err
+		return map[int]Category{}, err
 	}
 
 	err = json.Unmarshal(resp, &categories)
 	if err != nil {
-		return []Category{}, err
+		return map[int]Category{}, err
 	}
 
-	c.liveCategories = categories
-	return categories, nil
+	// Filter Banned Categories
+	for i := range categories {
+		allowed := true
+		category := categories[i]
+
+		for filter := range c.bannedLivestreams {
+			if strings.Contains(category.Name, c.bannedLivestreams[filter]) {
+				allowed = false
+			}
+		}
+
+		if allowed {
+			id, err := strconv.Atoi(category.Id)
+			if err != nil {
+				return map[int]Category{}, err
+			}
+			c.liveCategories[id] = category
+		}
+	}
+
+	return c.liveCategories, nil
 }
 
-func (c *XtreamClient) GetMovieCategories() ([]Category, error) {
+func (c *XtreamClient) GetMovieCategories() (map[int]Category, error) {
 	var categories []Category
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionMovieCategories)
 
+	// Fetch Categories
 	resp, err := SendRequest(query)
 	if err != nil {
-		return []Category{}, err
+		return map[int]Category{}, err
 	}
 
 	err = json.Unmarshal(resp, &categories)
 	if err != nil {
-		return []Category{}, err
+		return map[int]Category{}, err
 	}
 
-	c.movieCategories = categories
-	return categories, nil
+	// Filter Banned Categories
+	for i := range categories {
+		allowed := true
+		category := categories[i]
+
+		for filter := range c.bannedMovies {
+			if strings.Contains(category.Name, c.bannedMovies[filter]) {
+				allowed = false
+			}
+		}
+
+		if allowed {
+			id, err := strconv.Atoi(category.Id)
+			if err != nil {
+				return map[int]Category{}, err
+			}
+			c.movieCategories[id] = category
+		}
+	}
+
+	return c.movieCategories, nil
 }
 
-func (c *XtreamClient) GetSeriesCategories() ([]Category, error) {
+func (c *XtreamClient) GetSeriesCategories() (map[int]Category, error) {
 	var categories []Category
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionSeriesCategories)
 
+	// Fetch Categories
 	resp, err := SendRequest(query)
 	if err != nil {
-		return []Category{}, err
+		return map[int]Category{}, err
 	}
 
 	err = json.Unmarshal(resp, &categories)
 	if err != nil {
-		return []Category{}, err
+		return map[int]Category{}, err
 	}
 
-	c.seriesCategories = categories
-	return categories, nil
+	// Filter Banned Categories
+	for i := range categories {
+		allowed := true
+		category := categories[i]
+
+		for filter := range c.bannedSeries {
+			if strings.Contains(category.Name, c.bannedSeries[filter]) {
+				allowed = false
+			}
+		}
+
+		if allowed {
+			id, err := strconv.Atoi(category.Id)
+			if err != nil {
+				return map[int]Category{}, err
+			}
+			c.seriesCategories[id] = category
+		}
+	}
+
+	return c.seriesCategories, nil
 }

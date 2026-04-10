@@ -25,22 +25,40 @@ type LiveStream struct {
 	// HasCatchup          bool `json:"has_catchup"`
 }
 
-func (c *XtreamClient) GetLiveStreams() ([]LiveStream, error) {
+func (c *XtreamClient) GetLiveStreams() (map[int]LiveStream, error) {
 	var livestreams []LiveStream
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionLivestreams)
 
+	// Fetch LiveStreams
 	resp, err := SendRequest(query)
 	if err != nil {
-		return []LiveStream{}, err
+		return map[int]LiveStream{}, err
 	}
 
 	err = json.Unmarshal(resp, &livestreams)
 	if err != nil {
-		return []LiveStream{}, err
+		return map[int]LiveStream{}, err
 	}
 
-	c.livestreams = livestreams
-	return livestreams, nil
+	// Filter Banned LiveStreams
+	for i := range livestreams {
+		allowed := true
+		livestream := livestreams[i]
+
+		for j := range livestream.CategoryIds {
+			id := livestream.CategoryIds[j]
+
+			if _, ok := c.liveCategories[id]; !ok {
+				allowed = false
+			}
+		}
+
+		if allowed {
+			c.livestreams[livestream.Id] = livestream
+		}
+	}
+
+	return c.livestreams, nil
 }
 
 func (l LiveStream) Export(dir string, url string, enableImages bool) (int, int, error) {

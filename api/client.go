@@ -39,29 +39,37 @@ type XtreamClient struct {
 	password string
 
 	account          Account
-	liveCategories   []Category
-	movieCategories  []Category
-	seriesCategories []Category
-	livestreams      []LiveStream
-	movies           []Movie
-	series           []Series
+	liveCategories   map[int]Category
+	movieCategories  map[int]Category
+	seriesCategories map[int]Category
+	livestreams      map[int]LiveStream
+	movies           map[int]Movie
+	series           map[int]Series
+
+	bannedLivestreams []string
+	bannedMovies      []string
+	bannedSeries      []string
 
 	enableImages bool
 }
 
-func NewClient(url string, username string, password string, enableImages bool) *XtreamClient {
+func NewClient(url string, username string, password string, bannedLivestreams []string, bannedMovies []string, bannedSeries []string, enableImages bool) *XtreamClient {
 	return &XtreamClient{
 		url:      url,
 		username: username,
 		password: password,
 
 		account:          Account{},
-		liveCategories:   []Category{},
-		movieCategories:  []Category{},
-		seriesCategories: []Category{},
-		livestreams:      []LiveStream{},
-		movies:           []Movie{},
-		series:           []Series{},
+		liveCategories:   map[int]Category{},
+		movieCategories:  map[int]Category{},
+		seriesCategories: map[int]Category{},
+		livestreams:      map[int]LiveStream{},
+		movies:           map[int]Movie{},
+		series:           map[int]Series{},
+
+		bannedLivestreams: bannedLivestreams,
+		bannedMovies:      bannedMovies,
+		bannedSeries:      bannedSeries,
 
 		enableImages: enableImages,
 	}
@@ -105,14 +113,13 @@ func (c *XtreamClient) ExportLiveStreams() error {
 	}
 
 	length := len(c.livestreams)
-	for i := range c.livestreams {
+	i := 0
+	for _, livestream := range c.livestreams {
 		// Output Progress Information
 		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
 			log.Printf("[DEBUG] (LiveStream) Export Progress: %6d / %6d (%6.2f%%), STRM: %6d, IMG: %6d\n", i+1, length, percentage, updated_streams, updated_images)
 		}
-
-		livestream := c.livestreams[i]
 
 		url, err := c.buildURL(livestream.StreamType, livestream.Id, c.account.UserInfo.AllowedOutputFormats[0])
 		if err != nil {
@@ -125,6 +132,7 @@ func (c *XtreamClient) ExportLiveStreams() error {
 		}
 		updated_streams += updated_stream
 		updated_images += updated_image
+		i++
 	}
 
 	log.Printf("[INFO] LiveStreams Processed: %d, LiveStreams Updated: %d, Images Updated: %d\n", length, updated_streams, updated_images)
@@ -149,14 +157,13 @@ func (c *XtreamClient) ExportMovies() error {
 	}
 
 	length := len(c.movies)
-	for i := range c.movies {
+	i := 0
+	for _, movie := range c.movies {
 		// Output Progress Information
 		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
 			log.Printf("[DEBUG] (  Movies  ) Export Progress: %6d / %6d (%6.2f%%), STRM: %6d, IMG: %6d\n", i+1, length, percentage, updated_streams, updated_images)
 		}
-
-		movie := c.movies[i]
 
 		url, err := c.buildURL(movie.StreamType, movie.Id, movie.Extension)
 		if err != nil {
@@ -169,6 +176,7 @@ func (c *XtreamClient) ExportMovies() error {
 		}
 		updated_streams += updated_stream
 		updated_images += updated_image
+		i++
 	}
 
 	log.Printf("[INFO] Movies Processed: %d, Movies Updated: %d, Images Updated: %d\n", length, updated_streams, updated_images)
@@ -192,18 +200,19 @@ func (c *XtreamClient) ExportSeries() error {
 	}
 
 	length := len(c.series)
-	for i := range c.series {
+	i := 0
+	for _, show := range c.series {
 		// Output Progress Information
 		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
 			log.Printf("[DEBUG] (  Series  ) Export Progress: %6d / %6d (%6.2f%%), STRM: %6d, IMG: %6d\n", i+1, length, percentage, updated_streams, updated_images)
 		}
 
-		show := c.series[i]
 		info, err := c.GetSeriesInfo(show.Id)
 		if os.IsTimeout(err) {
-			log.Println("[WARNING] Idleing for 10 Minutes...")
-			time.Sleep(10 * time.Minute)
+			log.Printf("[ERROR] Request Timeout: %v\n", err)
+			log.Println("[WARNING] Request Timeout. Idling for 2 Minutes...")
+			time.Sleep(2 * time.Minute)
 
 			info, err = c.GetSeriesInfo(show.Id)
 			if err != nil {
@@ -226,19 +235,14 @@ func (c *XtreamClient) ExportSeries() error {
 		}
 		updated_images += updated_image
 
-		for j := range info.Seasons {
-			season := info.Seasons[j]
-			directory := pathDirectory + "/" + season.Name
-			err := os.MkdirAll(directory, 0o750)
+		for season, episodes := range info.Episodes {
+			directory := pathDirectory + "/Season " + season
+			err = os.MkdirAll(directory, 0o750)
 			if err != nil {
 				return fmt.Errorf("(%d) %w", show.Id, err)
 			}
 
-			index := strconv.Itoa(season.Number)
-			episodes := info.Episodes[index]
-			for k := range episodes {
-				episode := episodes[k]
-
+			for _, episode := range episodes {
 				id, err := strconv.Atoi(episode.Id)
 				if err != nil {
 					return fmt.Errorf("(%d) %w", show.Id, err)
@@ -257,6 +261,8 @@ func (c *XtreamClient) ExportSeries() error {
 				updated_streams += updated_stream
 			}
 		}
+
+		i++
 	}
 
 	log.Printf("[INFO] Series Processed: %d, Series Updated: %d, Images Updated: %d\n", length, updated_streams, updated_images)

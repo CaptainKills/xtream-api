@@ -15,7 +15,18 @@ const (
 	ENV_IMAGES   = "XTREAM_IMAGES"
 )
 
-var ENABLE_IMAGES bool = true
+var (
+	ENABLE_IMAGES bool = true
+
+	bannedLivestreams = []string{
+	}
+
+	bannedMovies = []string{
+	}
+
+	bannedSeries = []string{
+	}
+)
 
 func main() {
 	log.SetOutput(os.Stdout)
@@ -52,7 +63,7 @@ func main() {
 		start := time.Now()
 
 		// Xtream Client
-		client := xtream.NewClient(url, username, password, ENABLE_IMAGES)
+		client := xtream.NewClient(url, username, password, bannedLivestreams, bannedMovies, bannedSeries, ENABLE_IMAGES)
 		_, err := client.GetAccountInfo()
 		if err != nil {
 			log.Fatalf("[ERROR] Authentication Failed: %v\n", err)

@@ -81,22 +81,37 @@ type Episode struct {
 
 type EpisodeInfo struct{}
 
-func (c *XtreamClient) GetSeries() ([]Series, error) {
+func (c *XtreamClient) GetSeries() (map[int]Series, error) {
 	var series []Series
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionSeries)
 
+	// Fetch Series
 	resp, err := SendRequest(query)
 	if err != nil {
-		return []Series{}, err
+		return map[int]Series{}, err
 	}
 
 	err = json.Unmarshal(resp, &series)
 	if err != nil {
-		return []Series{}, err
+		return map[int]Series{}, err
 	}
 
-	c.series = series
-	return series, nil
+	// Filter Banned Series
+	for _, show := range series {
+		allowed := true
+
+		for _, id := range show.CategoryIds {
+			if _, ok := c.seriesCategories[id]; !ok {
+				allowed = false
+			}
+		}
+
+		if allowed {
+			c.series[show.Id] = show
+		}
+	}
+
+	return c.series, nil
 }
 
 func (c *XtreamClient) GetSeriesInfo(id int) (SeriesInfo, error) {
