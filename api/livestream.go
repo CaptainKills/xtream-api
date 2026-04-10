@@ -26,7 +26,9 @@ type LiveStream struct {
 }
 
 func (c *XtreamClient) GetLiveStreams() (map[int]LiveStream, error) {
+	c.livestreams = map[int]LiveStream{}
 	var livestreams []LiveStream
+
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionLivestreams)
 
 	// Fetch LiveStreams

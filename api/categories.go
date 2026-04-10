@@ -14,7 +14,9 @@ type Category struct {
 }
 
 func (c *XtreamClient) GetLiveStreamCategories() (map[int]Category, error) {
+	c.liveCategories = map[int]Category{}
 	var categories []Category
+
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionLiveCategories)
 
 	// Fetch Categories
@@ -52,7 +54,9 @@ func (c *XtreamClient) GetLiveStreamCategories() (map[int]Category, error) {
 }
 
 func (c *XtreamClient) GetMovieCategories() (map[int]Category, error) {
+	c.movieCategories = map[int]Category{}
 	var categories []Category
+
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionMovieCategories)
 
 	// Fetch Categories
@@ -90,7 +94,9 @@ func (c *XtreamClient) GetMovieCategories() (map[int]Category, error) {
 }
 
 func (c *XtreamClient) GetSeriesCategories() (map[int]Category, error) {
+	c.seriesCategories = map[int]Category{}
 	var categories []Category
+
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionSeriesCategories)
 
 	// Fetch Categories

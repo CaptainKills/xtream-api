@@ -82,7 +82,9 @@ type Episode struct {
 type EpisodeInfo struct{}
 
 func (c *XtreamClient) GetSeries() (map[int]Series, error) {
+	c.series = map[int]Series{}
 	var series []Series
+
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionSeries)
 
 	// Fetch Series

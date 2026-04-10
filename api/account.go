@@ -37,7 +37,9 @@ type ServerInfo struct {
 }
 
 func (c *XtreamClient) GetAccountInfo() (Account, error) {
+	c.account = Account{}
 	var account Account
+
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionAccountInfo)
 
 	resp, err := SendRequest(query)

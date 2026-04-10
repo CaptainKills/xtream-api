@@ -59,6 +59,14 @@ func main() {
 		log.Fatalln("[ERROR] Missing Environment Variables! Exiting Program...")
 	}
 
+	// Xtream Client
+	client := xtream.NewClient(url, username, password, bannedLivestreams, bannedMovies, bannedSeries, ENABLE_IMAGES)
+	_, err := client.GetAccountInfo()
+	if err != nil {
+		log.Fatalf("[ERROR] Authentication Failed: %v\n", err)
+	}
+	log.Printf("[INFO] Authentication Successful: %s\n", url)
+
 	for {
 		start := time.Now()
 

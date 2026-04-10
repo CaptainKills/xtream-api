@@ -28,7 +28,9 @@ type Movie struct {
 type MovieInfo struct{}
 
 func (c *XtreamClient) GetMovies() (map[int]Movie, error) {
+	c.movies = map[int]Movie{}
 	var movies []Movie
+
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionMovies)
 
 	// Fetch Movies
