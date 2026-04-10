@@ -2,6 +2,7 @@ package api
 
 import (
 	"bufio"
+	"log"
 	"os"
 	"strings"
 )
@@ -103,8 +104,9 @@ func WriteImage(dir string, file string, url string, enabled bool) (int, error) 
 		// In case Image does not exist, download & create file
 		image, err := SendRequest(url)
 		if err != nil {
-			// If image fetch fails, skip image creation
-			return updated, err
+			// If image fetch fails, skip image creation, without error
+			log.Printf("[WARNING] Failed to fetch image: %v\n", err)
+			return updated, nil
 		}
 
 		err = writeFile(file, image)
