@@ -29,9 +29,9 @@ type ServerInfo struct {
 	HttpsPort    string `json:"https_port"` // int
 	Process      bool   `json:"process"`
 	Protocol     string `json:"server_protocol"`
-	RtmpPort     string `json:"rtmp_port"`   // int
-	TimeNow      string `json:"time_now"`    // time.Time
-	TimestampNow string `json:timestamp_now` // time.Time
+	RtmpPort     string `json:"rtmp_port"`     // int
+	TimeNow      string `json:"time_now"`      // time.Time
+	TimestampNow int    `json:"timestamp_now"` // time.Time
 	Timezone     string `json:"timezone"`
 	URL          string `json:"url"`
 }
