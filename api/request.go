@@ -10,7 +10,10 @@ import (
 )
 
 // limiter ensures that there are at most 1000 requests per 60 seconds.
-var limiter = rate.NewLimiter(rate.Every(60*time.Second/1000), 1)
+var (
+	limiter = rate.NewLimiter(rate.Every(60*time.Second/1000), 1)
+	client  = http.Client{Timeout: 30 * time.Second}
+)
 
 func SendRequest(query string) ([]byte, error) {
 	err := limiter.Wait(context.Background())
@@ -23,7 +26,7 @@ func SendRequest(query string) ([]byte, error) {
 		return []byte{}, err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return []byte{}, err
 	}
