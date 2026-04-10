@@ -45,13 +45,10 @@ func (c *XtreamClient) GetMovies() (map[int]Movie, error) {
 	}
 
 	// Filter Banned Movies
-	for i := range movies {
+	for _, movie := range movies {
 		allowed := true
-		movie := movies[i]
 
-		for j := range movie.CategoryIds {
-			id := movie.CategoryIds[j]
-
+		for _, id := range movie.CategoryIds {
 			if _, ok := c.movieCategories[id]; !ok {
 				allowed = false
 			}

@@ -43,13 +43,10 @@ func (c *XtreamClient) GetLiveStreams() (map[int]LiveStream, error) {
 	}
 
 	// Filter Banned LiveStreams
-	for i := range livestreams {
+	for _, livestream := range livestreams {
 		allowed := true
-		livestream := livestreams[i]
 
-		for j := range livestream.CategoryIds {
-			id := livestream.CategoryIds[j]
-
+		for _, id := range livestream.CategoryIds {
 			if _, ok := c.liveCategories[id]; !ok {
 				allowed = false
 			}

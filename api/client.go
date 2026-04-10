@@ -7,7 +7,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 )
 
 const (
@@ -58,14 +57,6 @@ func NewClient(url string, username string, password string, bannedLivestreams [
 		url:      url,
 		username: username,
 		password: password,
-
-		account:          Account{},
-		liveCategories:   map[int]Category{},
-		movieCategories:  map[int]Category{},
-		seriesCategories: map[int]Category{},
-		livestreams:      map[int]LiveStream{},
-		movies:           map[int]Movie{},
-		series:           map[int]Series{},
 
 		bannedLivestreams: bannedLivestreams,
 		bannedMovies:      bannedMovies,
@@ -135,7 +126,7 @@ func (c *XtreamClient) ExportLiveStreams() error {
 		i++
 	}
 
-	log.Printf("[INFO] LiveStreams Processed: %d, LiveStreams Updated: %d, Images Updated: %d\n", length, updated_streams, updated_images)
+	log.Printf("[INFO] LiveStreams Processed: %d, Streams Updated: %d, Images Updated: %d\n", length, updated_streams, updated_images)
 
 	return nil
 }
@@ -179,7 +170,7 @@ func (c *XtreamClient) ExportMovies() error {
 		i++
 	}
 
-	log.Printf("[INFO] Movies Processed: %d, Movies Updated: %d, Images Updated: %d\n", length, updated_streams, updated_images)
+	log.Printf("[INFO] Movies Processed: %d, Streams Updated: %d, Images Updated: %d\n", length, updated_streams, updated_images)
 
 	return nil
 }
@@ -209,16 +200,7 @@ func (c *XtreamClient) ExportSeries() error {
 		}
 
 		info, err := c.GetSeriesInfo(show.Id)
-		if os.IsTimeout(err) {
-			log.Printf("[ERROR] Request Timeout: %v\n", err)
-			log.Println("[WARNING] Request Timeout. Idling for 2 Minutes...")
-			time.Sleep(2 * time.Minute)
-
-			info, err = c.GetSeriesInfo(show.Id)
-			if err != nil {
-				return fmt.Errorf("(%d) %w", show.Id, err)
-			}
-		} else if err != nil {
+		if err != nil {
 			log.Printf("[ERROR] Failed to get Series Info (%d): %q\n", show.Id, err)
 			continue
 		}
@@ -265,7 +247,7 @@ func (c *XtreamClient) ExportSeries() error {
 		i++
 	}
 
-	log.Printf("[INFO] Series Processed: %d, Series Updated: %d, Images Updated: %d\n", length, updated_streams, updated_images)
+	log.Printf("[INFO] Series Processed: %d, Streams Updated: %d, Images Updated: %d\n", length, updated_streams, updated_images)
 
 	return nil
 }
@@ -281,9 +263,7 @@ func (c *XtreamClient) ValidateLiveStreams() error {
 		return err
 	}
 
-	for i := range root {
-		dir := root[i]
-
+	for _, dir := range root {
 		if !dir.IsDir() {
 			log.Printf("[WARNING] Found File in Root Directory: %s\n", dir.Name())
 
@@ -302,9 +282,7 @@ func (c *XtreamClient) ValidateLiveStreams() error {
 		nr_of_streams := 0
 		nr_of_covers := 0
 
-		for j := range subdir {
-			file := subdir[j]
-
+		for _, file := range subdir {
 			if strings.HasSuffix(file.Name(), ".strm") {
 				nr_of_streams++
 				total_streams++
@@ -341,9 +319,7 @@ func (c *XtreamClient) ValidateMovies() error {
 		return err
 	}
 
-	for i := range root {
-		dir := root[i]
-
+	for _, dir := range root {
 		if !dir.IsDir() {
 			log.Printf("[WARNING] Found File in Root Directory: %s\n", dir.Name())
 
@@ -362,9 +338,7 @@ func (c *XtreamClient) ValidateMovies() error {
 		nr_of_streams := 0
 		nr_of_covers := 0
 
-		for j := range subdir {
-			file := subdir[j]
-
+		for _, file := range subdir {
 			if strings.HasSuffix(file.Name(), ".strm") {
 				nr_of_streams++
 				total_streams++
@@ -401,9 +375,7 @@ func (c *XtreamClient) ValidateSeries() error {
 		return err
 	}
 
-	for i := range root {
-		dir := root[i]
-
+	for _, dir := range root {
 		if !dir.IsDir() {
 			log.Printf("[WARNING] Found File in Root Directory: %s\n", dir.Name())
 
@@ -422,9 +394,7 @@ func (c *XtreamClient) ValidateSeries() error {
 		nr_of_streams := 0
 		nr_of_covers := 0
 
-		for j := range subdir {
-			file := subdir[j]
-
+		for _, file := range subdir {
 			// if strings.HasSuffix(file.Name(), ".strm") {
 			// 	nr_of_streams++
 			// 	total_streams++
@@ -454,9 +424,7 @@ func (c *XtreamClient) cleanDirectory(root string, dir []os.DirEntry) error {
 	streams := []os.DirEntry{}
 	images := []os.DirEntry{}
 
-	for i := range dir {
-		file := dir[i]
-
+	for _, file := range dir {
 		if strings.HasSuffix(file.Name(), ".strm") {
 			streams = append(streams, file)
 		}
@@ -475,9 +443,7 @@ func (c *XtreamClient) cleanDirectory(root string, dir []os.DirEntry) error {
 		}
 		newestModtime := newestInfo.ModTime()
 
-		for i := range streams {
-			stream := streams[i]
-
+		for _, stream := range streams {
 			info, err := os.Stat(root + "/" + stream.Name())
 			if err != nil {
 				return err
@@ -506,9 +472,7 @@ func (c *XtreamClient) cleanDirectory(root string, dir []os.DirEntry) error {
 		}
 		newestModtime := newestInfo.ModTime()
 
-		for i := range images {
-			image := images[i]
-
+		for _, image := range images {
 			info, err := os.Stat(root + "/" + image.Name())
 			if err != nil {
 				return err
