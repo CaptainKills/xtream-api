@@ -26,15 +26,17 @@ type Series struct {
 	ReleaseDate2   string `json:"release_date"`  // time.Time
 	TMDB           string `json:"tmdb"`          // int
 	Trailer        string `json:"youtube_trailer"`
+
+	Info SeriesInfo
 }
 
 type SeriesInfo struct {
 	Episodes map[string][]Episode `json:"episodes"`
-	Info     ExtraInfo            `json:"info"`
+	Info     ExtraSeriesInfo      `json:"info"`
 	Seasons  []Season             `json:"seasons"`
 }
 
-type ExtraInfo struct {
+type ExtraSeriesInfo struct {
 	// BackdropPath   []string `json:"backdrop_path"`
 	Cast string `json:"cast"`
 	// CategoryId     string `json:"category_id"` // int
@@ -48,7 +50,7 @@ type ExtraInfo struct {
 	Plot string `json:"plot"`
 	// Rating         string `json:"rating"`        // float64
 	// Rating5Based   string `json:"rating_5based"` // float64
-	// ReleaseDate    string `json:"releaseDate"`   // time.Time
+	ReleaseDate string `json:"releaseDate"` // time.Time
 	// ReleaseDate2   string `json:"release_date"`  // time.Time
 	// TMDB           string `json:"tmdb"`
 	// Trailer        string `json:"youtube_trailer"`
@@ -134,30 +136,44 @@ func (c *XtreamClient) GetSeriesInfo(id int) (SeriesInfo, error) {
 	return info, nil
 }
 
-func (s Series) Export(dir string, ur string, enabledImages bool) (int, error) {
+func (s Series) Export(dir string, ur string, enabledImages bool, enabledNfo bool) (int, int, error) {
 	s.Name = strings.ReplaceAll(s.Name, "/", "_")
 
 	pathImage := dir + "/cover" + GetImageExtension(s.Cover)
+	pathNfo := dir + "/tvshow.nfo"
 
 	// Write Image to File
 	updated_image, err := WriteImage(dir, pathImage, s.Cover, enabledImages)
 	if err != nil {
-		return updated_image, err
+		return updated_image, 0, err
 	}
 
-	return updated_image, nil
+	// Write NFO to File
+	updated_nfo, err := WriteNfo(dir, pathNfo, GenerateSeriesNfo(s.Info), enabledNfo)
+	if err != nil {
+		return updated_image, updated_nfo, err
+	}
+
+	return updated_image, updated_nfo, nil
 }
 
-func (e Episode) Export(dir string, url string) (int, error) {
+func (e Episode) Export(dir string, url string, enableNfo bool) (int, int, error) {
 	e.Title = strings.ReplaceAll(e.Title, "/", "_")
 
-	pathFile := dir + "/" + e.Title + ".strm"
+	pathStream := dir + "/" + e.Title + ".strm"
+	pathNfo := dir + "/" + e.Title + ".nfo"
 
 	// Write Stream to File
-	updated_stream, err := WriteFile(dir, pathFile, url)
+	updated_stream, err := WriteStream(dir, pathStream, url)
 	if err != nil {
-		return 0, err
+		return updated_stream, 0, err
 	}
 
-	return updated_stream, nil
+	// Write NFO to File
+	updated_nfo, err := WriteNfo(dir, pathNfo, GenerateEpisodeNfo(e), enableNfo)
+	if err != nil {
+		return updated_stream, updated_nfo, err
+	}
+
+	return updated_stream, updated_nfo, nil
 }

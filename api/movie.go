@@ -23,9 +23,31 @@ type Movie struct {
 	StreamType string `json:"stream_type"`
 	// TMDB       string `json:"tmdb"` // int
 	Trailer string `json:"trailer"`
+
+	Info MovieInfo
 }
 
-type MovieInfo struct{}
+type MovieInfo struct {
+	Info ExtraMovieInfo `json:"info"`
+	// Data MovieData      `json:"movie_data"`
+}
+
+type ExtraMovieInfo struct {
+	// BackdropPath []string `json:"backdrop_path"`
+	Cast string `json:"cast"`
+	// Cover        string   `json:"cover_big"`
+	Director string `json:"director"`
+	// Duration     string   `json:"duration"` // time.Time
+	// DurationSecs int      `json:"duration_secs"`
+	Genre        string `json:"genre"`
+	Name         string `json:"name"`
+	OriginalName string `json:"o_name"`
+	Plot         string `json:"plot"`
+	// Rating       string   `json:"rating"`      // float64
+	ReleaseDate string `json:"releasedate"` // time.Time
+	// TMDB         int      `json:"tmdb"`
+	// Trailer      string   `json:"youtube_trailer"`
+}
 
 func (c *XtreamClient) GetMovies() (map[int]Movie, error) {
 	c.movies = map[int]Movie{}
@@ -80,24 +102,32 @@ func (c *XtreamClient) GetMovieInfo(id int) (MovieInfo, error) {
 	return info, nil
 }
 
-func (m Movie) Export(dir string, url string, enableImages bool) (int, int, error) {
+func (m Movie) Export(dir string, url string, enableImages bool, enableNfo bool) (int, int, int, error) {
 	m.Name = strings.ReplaceAll(m.Name, "/", "_")
 
 	pathDirectory := dir + m.Name
-	pathFile := pathDirectory + "/" + m.Name + ".strm"
+	pathStream := pathDirectory + "/" + m.Name + ".strm"
 	pathImage := pathDirectory + "/cover" + GetImageExtension(m.Icon)
+	// pathNfo := pathDirectory + "/movie.nfo"
 
 	// Write Stream to File
-	updated_stream, err := WriteFile(pathDirectory, pathFile, url)
+	updated_stream, err := WriteStream(pathDirectory, pathStream, url)
 	if err != nil {
-		return updated_stream, 0, err
+		return updated_stream, 0, 0, err
 	}
 
 	// Write Image to File
 	updated_image, err := WriteImage(pathDirectory, pathImage, m.Icon, enableImages)
 	if err != nil {
-		return updated_stream, updated_image, err
+		return updated_stream, updated_image, 0, err
 	}
 
-	return updated_stream, updated_image, nil
+	// Write NFO to File
+	updated_nfo := 0
+	// updated_nfo, err := WriteNfo(pathDirectory, pathNfo, GenerateMovieNfo(m.Info), enableNfo)
+	// if err != nil {
+	// 	return updated_stream, updated_image, updated_nfo, err
+	// }
+
+	return updated_stream, updated_image, updated_nfo, nil
 }

@@ -50,7 +50,9 @@ type XtreamClient struct {
 }
 
 type XtreamOptions struct {
-	ImagesEnabled    bool
+	ImagesEnabled bool
+	NfoEnabled    bool
+
 	RequestPerMinute time.Duration
 	RequestTimeout   time.Duration
 
@@ -139,6 +141,7 @@ func (c *XtreamClient) ExportLiveStreams() error {
 func (c *XtreamClient) ExportMovies() error {
 	updated_streams := 0
 	updated_images := 0
+	updated_nfos := 0
 
 	if len(c.movies) == 0 {
 		return errors.New("No available Movies for export!")
@@ -158,24 +161,33 @@ func (c *XtreamClient) ExportMovies() error {
 		// Output Progress Information
 		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
-			log.Printf("[DEBUG] (  Movies  ) Export Progress: %6d / %6d (%6.2f%%), STRM: %6d, IMG: %6d\n", i+1, length, percentage, updated_streams, updated_images)
+			log.Printf("[DEBUG] (  Movies  ) Export Progress: %6d / %6d (%6.2f%%), STRM: %6d, IMG: %6d, NFO: %6d\n", i+1, length, percentage, updated_streams, updated_images, updated_nfos)
 		}
+
+		// info, err := c.GetMovieInfo(movie.Id)
+		// if err != nil {
+		// 	log.Printf("[ERROR] Failed to get Movie Info (%d): %q\n", movie.Id, err)
+		// 	continue
+		// }
+		// movie.Info = info
 
 		url, err := c.buildURL(movie.StreamType, movie.Id, movie.Extension)
 		if err != nil {
 			return fmt.Errorf("(%d) %w", movie.Id, err)
 		}
 
-		updated_stream, updated_image, err := movie.Export(directoryMovies, url, c.options.ImagesEnabled)
+		updated_stream, updated_image, updated_nfo, err := movie.Export(directoryMovies, url, c.options.ImagesEnabled, c.options.NfoEnabled)
 		if err != nil {
 			return fmt.Errorf("(%d) %w", movie.Id, err)
 		}
+
 		updated_streams += updated_stream
 		updated_images += updated_image
+		updated_nfos += updated_nfo
 		i++
 	}
 
-	log.Printf("[INFO] Movies Processed: %d, Streams Updated: %d, Images Updated: %d\n", length, updated_streams, updated_images)
+	log.Printf("[INFO] Movies Processed: %d, Streams Updated: %d, Images Updated: %d, Metadata Updated: %d\n", length, updated_streams, updated_images, updated_nfos)
 
 	return nil
 }
@@ -183,6 +195,7 @@ func (c *XtreamClient) ExportMovies() error {
 func (c *XtreamClient) ExportSeries() error {
 	updated_streams := 0
 	updated_images := 0
+	updated_nfos := 0
 
 	if len(c.series) == 0 {
 		return errors.New("No available Series for export!")
@@ -201,7 +214,7 @@ func (c *XtreamClient) ExportSeries() error {
 		// Output Progress Information
 		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
-			log.Printf("[DEBUG] (  Series  ) Export Progress: %6d / %6d (%6.2f%%), STRM: %6d, IMG: %6d\n", i+1, length, percentage, updated_streams, updated_images)
+			log.Printf("[DEBUG] (  Series  ) Export Progress: %6d / %6d (%6.2f%%), STRM: %6d, IMG: %6d, NFO: %6d\n", i+1, length, percentage, updated_streams, updated_images, updated_nfos)
 		}
 
 		info, err := c.GetSeriesInfo(show.Id)
@@ -209,6 +222,7 @@ func (c *XtreamClient) ExportSeries() error {
 			log.Printf("[ERROR] Failed to get Series Info (%d): %q\n", show.Id, err)
 			continue
 		}
+		show.Info = info
 
 		pathDirectory := directorySeries + show.Name
 		err = os.MkdirAll(pathDirectory, 0o750)
@@ -216,11 +230,12 @@ func (c *XtreamClient) ExportSeries() error {
 			return fmt.Errorf("(%d) %w", show.Id, err)
 		}
 
-		updated_image, err := show.Export(pathDirectory, show.Cover, c.options.ImagesEnabled)
+		updated_image, updated_nfo, err := show.Export(pathDirectory, show.Cover, c.options.ImagesEnabled, c.options.NfoEnabled)
 		if err != nil {
 			return fmt.Errorf("(%d) %w", show.Id, err)
 		}
 		updated_images += updated_image
+		updated_nfos += updated_nfo
 
 		for season, episodes := range info.Episodes {
 			directory := pathDirectory + "/Season " + season
@@ -240,19 +255,20 @@ func (c *XtreamClient) ExportSeries() error {
 					return fmt.Errorf("(%d) %w", show.Id, err)
 				}
 
-				updated_stream, err := episode.Export(directory, url)
+				updated_stream, updated_nfo, err := episode.Export(directory, url, c.options.NfoEnabled)
 				if err != nil {
 					return fmt.Errorf("(%d) %w", show.Id, err)
 				}
 
 				updated_streams += updated_stream
+				updated_nfos += updated_nfo
 			}
 		}
 
 		i++
 	}
 
-	log.Printf("[INFO] Series Processed: %d, Streams Updated: %d, Images Updated: %d\n", length, updated_streams, updated_images)
+	log.Printf("[INFO] Series Processed: %d, Streams Updated: %d, Images Updated: %d, Metadata Updated: %d\n", length, updated_streams, updated_images, updated_nfos)
 
 	return nil
 }

@@ -18,6 +18,7 @@ const (
 
 	// Optional Environment Variables
 	ENV_IMAGES   = "XTREAM_IMAGES"
+	ENV_NFO      = "XTREAM_NFO"
 	ENV_REQUESTS = "XTREAM_REQUESTS"
 	ENV_TIMEOUT  = "XTREAM_TIMEOUT"
 
@@ -61,6 +62,18 @@ func GetEnvironmentOptions() xtream.XtreamOptions {
 	default:
 		log.Printf("[WARNING] '%s' Environment Variable Invalid!\n", ENV_IMAGES)
 		options.ImagesEnabled = true
+	}
+
+	// NFO Enabled
+	nfo := os.Getenv(ENV_NFO)
+	switch nfo {
+	case "true":
+		options.NfoEnabled = true
+	case "false":
+		options.NfoEnabled = false
+	default:
+		log.Printf("[WARNING] '%s' Environment Variable Invalid!\n", ENV_NFO)
+		options.NfoEnabled = true
 	}
 
 	// Request Per Minute

@@ -13,6 +13,7 @@ Player.
 | `XTREAM_USERNAME`       | The Username used to log in to the IPTV service.                        | `""`        |
 | `XTREAM_PASSWORD`       | The Password used to log in to the IPTV service.                        | `""`        | 
 | `XTREAM_IMAGES`         | Whether the tool should download images alongside stream file.          | `true`      |
+| `XTREAM_NFO`            | Whether the tool should download metadata alongside stream file.        | `true`      |
 | `XTREAM_REQUESTS`       | The maximum number of requests per minute.                              | `1000`      |
 | `XTREAM_TIMEOUT`        | The maximum time before a request returns a timeout error, in seconds.  | `10`        |
 | `XTREAM_BANNED_LIVE`    | A ',' separated list of banned livestream (partial) **category** names. | `[]`        |
@@ -36,6 +37,7 @@ services:
 
       # Optional Environment Variables
       # - XTREAM_IMAGES=true              # Enable/Disable Image Fetching
+      # - XTREAM_NFO=true                 # Enable/Disable Metadata Fetching
       # - XTREAM_REQUESTS=1000            # Maximum requests per minute
       # - XTREAM_TIMEOUT=10               # Maximum time before request returns timeout error
       # - XTREAM_BANNED_LIVE=""           # ',' Seperated list of banned livestream categories

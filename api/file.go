@@ -57,7 +57,7 @@ func GetImageExtension(url string) string {
 	return extension
 }
 
-func WriteFile(dir string, file string, data string) (int, error) {
+func WriteStream(dir string, file string, url string) (int, error) {
 	updated := 0
 
 	// Create Subdirectory
@@ -67,15 +67,15 @@ func WriteFile(dir string, file string, data string) (int, error) {
 	}
 
 	// Try to read existing .strm file
-	f, err := readFile(file)
+	data, err := readFile(file)
 	if err != nil {
 		return updated, err
 	}
 
 	// Check if .strm already exists & has the correct stream
-	if f != data {
+	if data != url {
 		// In case .strm does not exist or has the incorrect stream, overwrite file
-		err := writeFile(file, []byte(data))
+		err := writeFile(file, []byte(url))
 		if err != nil {
 			return updated, err
 		}
@@ -108,6 +108,39 @@ func WriteImage(dir string, file string, url string, enabled bool) (int, error) 
 		}
 
 		err = writeFile(file, image)
+		if err != nil {
+			return updated, err
+		}
+		updated = 1
+	}
+
+	return updated, nil
+}
+
+func WriteNfo(dir string, file string, nfo string, enabled bool) (int, error) {
+	updated := 0
+
+	// If NFO is disabled, do not create file
+	if !enabled {
+		return 0, nil
+	}
+
+	// Create Subdirectory
+	err := os.Mkdir(dir, 0o750)
+	if err != nil && !os.IsExist(err) {
+		return updated, err
+	}
+
+	// Try to read existing .strm file
+	data, err := readFile(file)
+	if err != nil {
+		return updated, err
+	}
+
+	// Check if .strm already exists & has the correct stream
+	if data != nfo {
+		// In case .strm does not exist or has the incorrect stream, overwrite file
+		err := writeFile(file, []byte(nfo))
 		if err != nil {
 			return updated, err
 		}
