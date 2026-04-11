@@ -62,10 +62,10 @@ func GetEnvironmentOptions() xtream.XtreamOptions {
 			options.ImagesEnabled = false
 		default:
 			log.Printf("[WARNING] '%s' Environment Variable Invalid!\n", ENV_IMAGES)
-			options.ImagesEnabled = true
+			options.ImagesEnabled = false
 		}
 	} else {
-		options.ImagesEnabled = true
+		options.ImagesEnabled = false
 	}
 
 	// NFO Enabled
@@ -78,10 +78,10 @@ func GetEnvironmentOptions() xtream.XtreamOptions {
 			options.NfoEnabled = false
 		default:
 			log.Printf("[WARNING] '%s' Environment Variable Invalid!\n", ENV_NFO)
-			options.NfoEnabled = true
+			options.NfoEnabled = false
 		}
 	} else {
-		options.NfoEnabled = true
+		options.NfoEnabled = false
 	}
 
 	// Request Per Minute

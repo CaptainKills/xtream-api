@@ -11,9 +11,9 @@ Player.
 | ----------------------- | ----------------------------------------------------------------------- | ----------- |
 | `XTREAM_URL`            | The URL used for fetching IPTV streams.                                 | `""`        |
 | `XTREAM_USERNAME`       | The Username used to log in to the IPTV service.                        | `""`        |
-| `XTREAM_PASSWORD`       | The Password used to log in to the IPTV service.                        | `""`        | 
-| `XTREAM_IMAGES`         | Whether the tool should download images alongside stream file.          | `true`      |
-| `XTREAM_NFO`            | Whether the tool should download metadata alongside stream file.        | `true`      |
+| `XTREAM_PASSWORD`       | The Password used to log in to the IPTV service.                        | `""`        |
+| `XTREAM_IMAGES`         | Whether the tool should download images alongside stream file.          | `false`     |
+| `XTREAM_NFO`            | Whether the tool should download metadata alongside stream file.        | `false`     |
 | `XTREAM_REQUESTS`       | The maximum number of requests per minute.                              | `1000`      |
 | `XTREAM_TIMEOUT`        | The maximum time before a request returns a timeout error, in seconds.  | `10`        |
 | `XTREAM_BANNED_LIVE`    | A ',' separated list of banned livestream (partial) **category** names. | `[]`        |
@@ -36,8 +36,8 @@ services:
       - XTREAM_PASSWORD=...               # Change to your IPTV Password
 
       # Optional Environment Variables
-      # - XTREAM_IMAGES=true              # Enable/Disable Image Fetching
-      # - XTREAM_NFO=true                 # Enable/Disable Metadata Fetching
+      # - XTREAM_IMAGES=false             # Enable/Disable Image Fetching
+      # - XTREAM_NFO=false                # Enable/Disable Metadata Fetching
       # - XTREAM_REQUESTS=1000            # Maximum requests per minute
       # - XTREAM_TIMEOUT=10               # Maximum time before request returns timeout error
       # - XTREAM_BANNED_LIVE=""           # ',' Seperated list of banned livestream categories
@@ -72,6 +72,9 @@ The content fetched by this tool will be downloaded in the `/media` directory:
 
 If downloading images is enabled, each piece of content will try to download its `cover.jpg` image.
 Image downloading can be disabled using the `XTREAM_IMAGES` environment variable.
+
+If downloading metadata is enabled, each piece of content will try to download its `*.nfo` metadata.
+Metadata downloading can be disabled using the `XTREAM_NFO` environment variable.
 
 In order to make sure the tool doesn't exceed the rate limit of your IPTV provider, the maximum
 number of requests per minute can be set using the `XTREAM_REQUESTS` environment variable.
