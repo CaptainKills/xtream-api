@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	xtream "github.com/CaptainKills/xtream-api/api"
 )
@@ -18,6 +19,7 @@ const (
 	// Optional Environment Variables
 	ENV_IMAGES   = "XTREAM_IMAGES"
 	ENV_REQUESTS = "XTREAM_REQUESTS"
+	ENV_TIMEOUT  = "XTREAM_TIMEOUT"
 
 	ENV_BANNED_LIVE   = "XTREAM_BANNED_LIVE"
 	ENV_BANNED_MOVIES = "XTREAM_BANNED_MOVIES"
@@ -48,7 +50,6 @@ func GetEnvironmentCredentials() (string, string, string) {
 
 func GetEnvironmentOptions() xtream.XtreamOptions {
 	var options xtream.XtreamOptions
-	var err error
 
 	// Images Enabled
 	images := os.Getenv(ENV_IMAGES)
@@ -65,12 +66,28 @@ func GetEnvironmentOptions() xtream.XtreamOptions {
 	// Request Per Minute
 	requests := os.Getenv(ENV_REQUESTS)
 	if requests == "" {
-		options.RequestPerMinute = 1000
+		options.RequestPerMinute = time.Duration(1000)
 	} else {
-		options.RequestPerMinute, err = strconv.Atoi(requests)
+		r, err := strconv.Atoi(requests)
 		if err != nil {
-			log.Printf("[WARNING] '%s' Environment Variable Invalid!\n", ENV_REQUESTS)
-			options.RequestPerMinute = 1000
+			log.Printf("[WARNING] '%s' Environment Variable Invalid! %v\n", ENV_REQUESTS, err)
+			options.RequestPerMinute = time.Duration(1000)
+		} else {
+			options.RequestPerMinute = time.Duration(r)
+		}
+	}
+
+	// Request Timeout
+	timeout := os.Getenv(ENV_TIMEOUT)
+	if timeout == "" {
+		options.RequestTimeout = time.Duration(10)
+	} else {
+		t, err := strconv.Atoi(timeout)
+		if err != nil {
+			log.Printf("[WARNING] '%s' Environment Variable Invalid! %v\n", ENV_TIMEOUT, err)
+			options.RequestTimeout = time.Duration(10)
+		} else {
+			options.RequestTimeout = time.Duration(t)
 		}
 	}
 

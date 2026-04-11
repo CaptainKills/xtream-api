@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -50,7 +51,8 @@ type XtreamClient struct {
 
 type XtreamOptions struct {
 	ImagesEnabled    bool
-	RequestPerMinute int
+	RequestPerMinute time.Duration
+	RequestTimeout   time.Duration
 
 	BannedLiveStreams []string
 	BannedMovies      []string
@@ -58,6 +60,9 @@ type XtreamOptions struct {
 }
 
 func NewClient(url string, username string, password string, options XtreamOptions) *XtreamClient {
+	// Initialise Request Handler
+	InitRequest(options.RequestPerMinute, options.RequestTimeout)
+
 	return &XtreamClient{
 		url:      url,
 		username: username,

@@ -9,11 +9,19 @@ import (
 	"golang.org/x/time/rate"
 )
 
-// limiter ensures that there are at most 1000 requests per 60 seconds.
 var (
-	limiter = rate.NewLimiter(rate.Every(60*time.Second/1000), 1)
-	client  = http.Client{Timeout: 30 * time.Second}
+	limiter *rate.Limiter
+	client  http.Client
 )
+
+func InitRequest(limit time.Duration, timeout time.Duration) {
+	// Rate Limiter
+	r := rate.Every(60 * time.Second / limit)
+	limiter = rate.NewLimiter(r, 1)
+
+	// HTTP Client
+	client = http.Client{Timeout: timeout * time.Second}
+}
 
 func SendRequest(query string) ([]byte, error) {
 	err := limiter.Wait(context.Background())
