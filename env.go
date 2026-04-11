@@ -54,25 +54,33 @@ func GetEnvironmentOptions() xtream.XtreamOptions {
 
 	// Images Enabled
 	images := os.Getenv(ENV_IMAGES)
-	switch images {
-	case "true":
-		options.ImagesEnabled = true
-	case "false":
-		options.ImagesEnabled = false
-	default:
-		log.Printf("[WARNING] '%s' Environment Variable Invalid!\n", ENV_IMAGES)
+	if images != "" {
+		switch images {
+		case "true":
+			options.ImagesEnabled = true
+		case "false":
+			options.ImagesEnabled = false
+		default:
+			log.Printf("[WARNING] '%s' Environment Variable Invalid!\n", ENV_IMAGES)
+			options.ImagesEnabled = true
+		}
+	} else {
 		options.ImagesEnabled = true
 	}
 
 	// NFO Enabled
 	nfo := os.Getenv(ENV_NFO)
-	switch nfo {
-	case "true":
-		options.NfoEnabled = true
-	case "false":
-		options.NfoEnabled = false
-	default:
-		log.Printf("[WARNING] '%s' Environment Variable Invalid!\n", ENV_NFO)
+	if nfo != "" {
+		switch nfo {
+		case "true":
+			options.NfoEnabled = true
+		case "false":
+			options.NfoEnabled = false
+		default:
+			log.Printf("[WARNING] '%s' Environment Variable Invalid!\n", ENV_NFO)
+			options.NfoEnabled = true
+		}
+	} else {
 		options.NfoEnabled = true
 	}
 
