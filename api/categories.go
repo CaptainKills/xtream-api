@@ -34,7 +34,7 @@ func (c *XtreamClient) GetLiveStreamCategories() (map[int]Category, error) {
 	for _, category := range categories {
 		allowed := true
 
-		for _, filter := range c.bannedLivestreams {
+		for _, filter := range c.options.BannedLiveStreams {
 			if strings.Contains(category.Name, filter) {
 				allowed = false
 			}
@@ -73,7 +73,7 @@ func (c *XtreamClient) GetMovieCategories() (map[int]Category, error) {
 	for _, category := range categories {
 		allowed := true
 
-		for _, filter := range c.bannedMovies {
+		for _, filter := range c.options.BannedMovies {
 			if strings.Contains(category.Name, filter) {
 				allowed = false
 			}
@@ -112,7 +112,7 @@ func (c *XtreamClient) GetSeriesCategories() (map[int]Category, error) {
 	for _, category := range categories {
 		allowed := true
 
-		for _, filter := range c.bannedSeries {
+		for _, filter := range c.options.BannedSeries {
 			if strings.Contains(category.Name, filter) {
 				allowed = false
 			}

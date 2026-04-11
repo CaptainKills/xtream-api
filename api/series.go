@@ -154,7 +154,7 @@ func (e Episode) Export(dir string, url string) (int, error) {
 	pathFile := dir + "/" + e.Title + ".strm"
 
 	// Write Stream to File
-	updated_stream, err := WriteStream(dir, pathFile, url)
+	updated_stream, err := WriteFile(dir, pathFile, url)
 	if err != nil {
 		return 0, err
 	}

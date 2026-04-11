@@ -8,59 +8,19 @@ import (
 	xtream "github.com/CaptainKills/xtream-api/api"
 )
 
-const (
-	ENV_URL      = "XTREAM_URL"
-	ENV_USERNAME = "XTREAM_USERNAME"
-	ENV_PASSWORD = "XTREAM_PASSWORD"
-	ENV_IMAGES   = "XTREAM_IMAGES"
-)
-
-var (
-	ENABLE_IMAGES bool = true
-
-	bannedLivestreams = []string{
-	}
-
-	bannedMovies = []string{
-	}
-
-	bannedSeries = []string{
-	}
-)
-
 func main() {
 	log.SetOutput(os.Stdout)
 
 	// Environment Variables
-	url := os.Getenv(ENV_URL)
-	if url == "" {
-		log.Printf("[ERROR] '%s' Environment Variable Not Specified!\n", ENV_URL)
-	}
-
-	username := os.Getenv(ENV_USERNAME)
-	if username == "" {
-		log.Printf("[ERROR] '%s' Environment Variable Not Specified!\n", ENV_USERNAME)
-	}
-
-	password := os.Getenv(ENV_PASSWORD)
-	if password == "" {
-		log.Printf("[ERROR] '%s' Environment Variable Not Specified!\n", ENV_PASSWORD)
-	}
-
-	images := os.Getenv(ENV_IMAGES)
-	switch images {
-	case "true":
-		ENABLE_IMAGES = true
-	case "false":
-		ENABLE_IMAGES = false
-	}
+	url, username, password := GetEnvironmentCredentials()
+	options := GetEnvironmentOptions()
 
 	if url == "" || username == "" || password == "" {
 		log.Fatalln("[ERROR] Missing Environment Variables! Exiting Program...")
 	}
 
 	// Xtream Client
-	client := xtream.NewClient(url, username, password, bannedLivestreams, bannedMovies, bannedSeries, ENABLE_IMAGES)
+	client := xtream.NewClient(url, username, password, options)
 	_, err := client.GetAccountInfo()
 	if err != nil {
 		log.Fatalf("[ERROR] Authentication Failed: %v\n", err)
@@ -69,14 +29,6 @@ func main() {
 
 	for {
 		start := time.Now()
-
-		// Xtream Client
-		client := xtream.NewClient(url, username, password, bannedLivestreams, bannedMovies, bannedSeries, ENABLE_IMAGES)
-		_, err := client.GetAccountInfo()
-		if err != nil {
-			log.Fatalf("[ERROR] Authentication Failed: %v\n", err)
-		}
-		log.Printf("[INFO] Authentication Successful: %s\n", url)
 
 		// Fetch Categories
 		live_categories, err := client.GetLiveStreamCategories()

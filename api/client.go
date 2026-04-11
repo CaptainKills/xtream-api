@@ -45,24 +45,24 @@ type XtreamClient struct {
 	movies           map[int]Movie
 	series           map[int]Series
 
-	bannedLivestreams []string
-	bannedMovies      []string
-	bannedSeries      []string
-
-	enableImages bool
+	options XtreamOptions
 }
 
-func NewClient(url string, username string, password string, bannedLivestreams []string, bannedMovies []string, bannedSeries []string, enableImages bool) *XtreamClient {
+type XtreamOptions struct {
+	ImagesEnabled    bool
+	RequestPerMinute int
+
+	BannedLiveStreams []string
+	BannedMovies      []string
+	BannedSeries      []string
+}
+
+func NewClient(url string, username string, password string, options XtreamOptions) *XtreamClient {
 	return &XtreamClient{
 		url:      url,
 		username: username,
 		password: password,
-
-		bannedLivestreams: bannedLivestreams,
-		bannedMovies:      bannedMovies,
-		bannedSeries:      bannedSeries,
-
-		enableImages: enableImages,
+		options:  options,
 	}
 }
 
@@ -117,7 +117,7 @@ func (c *XtreamClient) ExportLiveStreams() error {
 			return fmt.Errorf("(%d) %w", livestream.Id, err)
 		}
 
-		updated_stream, updated_image, err := livestream.Export(directoryLivestreams, url, c.enableImages)
+		updated_stream, updated_image, err := livestream.Export(directoryLivestreams, url, c.options.ImagesEnabled)
 		if err != nil {
 			return fmt.Errorf("(%d) %w", livestream.Id, err)
 		}
@@ -161,7 +161,7 @@ func (c *XtreamClient) ExportMovies() error {
 			return fmt.Errorf("(%d) %w", movie.Id, err)
 		}
 
-		updated_stream, updated_image, err := movie.Export(directoryMovies, url, c.enableImages)
+		updated_stream, updated_image, err := movie.Export(directoryMovies, url, c.options.ImagesEnabled)
 		if err != nil {
 			return fmt.Errorf("(%d) %w", movie.Id, err)
 		}
@@ -211,7 +211,7 @@ func (c *XtreamClient) ExportSeries() error {
 			return fmt.Errorf("(%d) %w", show.Id, err)
 		}
 
-		updated_image, err := show.Export(pathDirectory, show.Cover, c.enableImages)
+		updated_image, err := show.Export(pathDirectory, show.Cover, c.options.ImagesEnabled)
 		if err != nil {
 			return fmt.Errorf("(%d) %w", show.Id, err)
 		}

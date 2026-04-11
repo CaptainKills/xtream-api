@@ -68,7 +68,7 @@ func (l LiveStream) Export(dir string, url string, enableImages bool) (int, int,
 	pathImage := pathDirectory + "/cover" + GetImageExtension(l.Icon)
 
 	// Write Stream to File
-	updated_stream, err := WriteStream(pathDirectory, pathFile, url)
+	updated_stream, err := WriteFile(pathDirectory, pathFile, url)
 	if err != nil {
 		return updated_stream, 0, err
 	}

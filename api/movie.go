@@ -88,7 +88,7 @@ func (m Movie) Export(dir string, url string, enableImages bool) (int, int, erro
 	pathImage := pathDirectory + "/cover" + GetImageExtension(m.Icon)
 
 	// Write Stream to File
-	updated_stream, err := WriteStream(pathDirectory, pathFile, url)
+	updated_stream, err := WriteFile(pathDirectory, pathFile, url)
 	if err != nil {
 		return updated_stream, 0, err
 	}
