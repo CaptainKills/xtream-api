@@ -15,7 +15,7 @@ Player.
 | `XTREAM_IMAGES`         | Whether the tool should download images alongside stream file.          | `false`     |
 | `XTREAM_NFO`            | Whether the tool should download metadata alongside stream file.        | `false`     |
 | `XTREAM_REQUESTS`       | The maximum number of requests per minute.                              | `1000`      |
-| `XTREAM_TIMEOUT`        | The maximum time before a request returns a timeout error, in seconds.  | `10`        |
+| `XTREAM_TIMEOUT`        | The maximum time before a request returns a timeout error, in seconds.  | `30`        |
 | `XTREAM_BANNED_LIVE`    | A ',' separated list of banned livestream (partial) **category** names. | `[]`        |
 | `XTREAM_BANNED_MOVIES`  | A ',' separated list of banned movie (partial) **category** names.      | `[]`        |
 | `XTREAM_BANNED_SERIES`  | A ',' separated list of banned series (partial) **category** names.     | `[]`        |

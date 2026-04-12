@@ -101,12 +101,12 @@ func GetEnvironmentOptions() xtream.XtreamOptions {
 	// Request Timeout
 	timeout := os.Getenv(ENV_TIMEOUT)
 	if timeout == "" {
-		options.RequestTimeout = time.Duration(10)
+		options.RequestTimeout = time.Duration(30)
 	} else {
 		t, err := strconv.Atoi(timeout)
 		if err != nil {
 			log.Printf("[WARNING] '%s' Environment Variable Invalid! %v\n", ENV_TIMEOUT, err)
-			options.RequestTimeout = time.Duration(10)
+			options.RequestTimeout = time.Duration(30)
 		} else {
 			options.RequestTimeout = time.Duration(t)
 		}

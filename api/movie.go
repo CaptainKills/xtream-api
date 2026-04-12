@@ -108,7 +108,7 @@ func (m Movie) Export(dir string, url string, enableImages bool, enableNfo bool)
 	pathDirectory := dir + m.Name
 	pathStream := pathDirectory + "/" + m.Name + ".strm"
 	pathImage := pathDirectory + "/cover" + GetImageExtension(m.Icon)
-	// pathNfo := pathDirectory + "/movie.nfo"
+	pathNfo := pathDirectory + "/movie.nfo"
 
 	// Write Stream to File
 	updated_stream, err := WriteStream(pathDirectory, pathStream, url)
@@ -123,11 +123,10 @@ func (m Movie) Export(dir string, url string, enableImages bool, enableNfo bool)
 	}
 
 	// Write NFO to File
-	updated_nfo := 0
-	// updated_nfo, err := WriteNfo(pathDirectory, pathNfo, GenerateMovieNfo(m.Info), enableNfo)
-	// if err != nil {
-	// 	return updated_stream, updated_image, updated_nfo, err
-	// }
+	updated_nfo, err := WriteNfo(pathDirectory, pathNfo, GenerateMovieNfo(m.Info), enableNfo)
+	if err != nil {
+		return updated_stream, updated_image, updated_nfo, err
+	}
 
 	return updated_stream, updated_image, updated_nfo, nil
 }
