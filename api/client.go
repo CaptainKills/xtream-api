@@ -29,6 +29,7 @@ const (
 	directoryLivestreams = directoryRoot + "live/"
 	directoryMovies      = directoryRoot + "movies/"
 	directorySeries      = directoryRoot + "series/"
+	directoryCache       = directoryRoot + "cache/"
 
 	debugPercent = 100
 )
@@ -38,15 +39,21 @@ type XtreamClient struct {
 	username string
 	password string
 
-	account          Account
+	account Account
+	data    XtreamData
+	old     XtreamData
+
+	options XtreamOptions
+	raw     XtreamRaw
+}
+
+type XtreamData struct {
 	liveCategories   map[int]Category
 	movieCategories  map[int]Category
 	seriesCategories map[int]Category
 	livestreams      map[int]LiveStream
 	movies           map[int]Movie
 	series           map[int]Series
-
-	options XtreamOptions
 }
 
 type XtreamOptions struct {
@@ -98,7 +105,7 @@ func (c *XtreamClient) ExportLiveStreams() error {
 	updated_streams := 0
 	updated_images := 0
 
-	if len(c.livestreams) == 0 {
+	if len(c.data.livestreams) == 0 {
 		return errors.New("No available LiveStreams for export!")
 	}
 
@@ -110,9 +117,9 @@ func (c *XtreamClient) ExportLiveStreams() error {
 		return err
 	}
 
-	length := len(c.livestreams)
+	length := len(c.data.livestreams)
 	i := 0
-	for _, livestream := range c.livestreams {
+	for _, livestream := range c.data.livestreams {
 		// Output Progress Information
 		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
@@ -143,7 +150,7 @@ func (c *XtreamClient) ExportMovies() error {
 	updated_images := 0
 	updated_nfos := 0
 
-	if len(c.movies) == 0 {
+	if len(c.data.movies) == 0 {
 		return errors.New("No available Movies for export!")
 	}
 
@@ -155,9 +162,9 @@ func (c *XtreamClient) ExportMovies() error {
 		return err
 	}
 
-	length := len(c.movies)
+	length := len(c.data.movies)
 	i := 0
-	for _, movie := range c.movies {
+	for _, movie := range c.data.movies {
 		// Output Progress Information
 		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
@@ -197,7 +204,7 @@ func (c *XtreamClient) ExportSeries() error {
 	updated_images := 0
 	updated_nfos := 0
 
-	if len(c.series) == 0 {
+	if len(c.data.series) == 0 {
 		return errors.New("No available Series for export!")
 	}
 
@@ -208,9 +215,9 @@ func (c *XtreamClient) ExportSeries() error {
 		return err
 	}
 
-	length := len(c.series)
+	length := len(c.data.series)
 	i := 0
-	for _, show := range c.series {
+	for _, show := range c.data.series {
 		// Output Progress Information
 		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100

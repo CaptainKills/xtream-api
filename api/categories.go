@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 )
 
 type Category struct {
@@ -14,7 +13,7 @@ type Category struct {
 }
 
 func (c *XtreamClient) GetLiveStreamCategories() (map[int]Category, error) {
-	c.liveCategories = map[int]Category{}
+	c.data.liveCategories = map[int]Category{}
 	var categories []Category
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionLiveCategories)
@@ -24,36 +23,29 @@ func (c *XtreamClient) GetLiveStreamCategories() (map[int]Category, error) {
 	if err != nil {
 		return map[int]Category{}, err
 	}
+	c.raw.liveCategories = resp
 
+	// Unmarshal Categories
 	err = json.Unmarshal(resp, &categories)
 	if err != nil {
 		return map[int]Category{}, err
 	}
 
-	// Filter Banned Categories
+	// Map Categories
 	for _, category := range categories {
-		allowed := true
-
-		for _, filter := range c.options.BannedLiveStreams {
-			if strings.Contains(category.Name, filter) {
-				allowed = false
-			}
+		id, err := strconv.Atoi(category.Id)
+		if err != nil {
+			return map[int]Category{}, err
 		}
 
-		if allowed {
-			id, err := strconv.Atoi(category.Id)
-			if err != nil {
-				return map[int]Category{}, err
-			}
-			c.liveCategories[id] = category
-		}
+		c.data.liveCategories[id] = category
 	}
 
-	return c.liveCategories, nil
+	return c.data.liveCategories, nil
 }
 
 func (c *XtreamClient) GetMovieCategories() (map[int]Category, error) {
-	c.movieCategories = map[int]Category{}
+	c.data.movieCategories = map[int]Category{}
 	var categories []Category
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionMovieCategories)
@@ -63,36 +55,29 @@ func (c *XtreamClient) GetMovieCategories() (map[int]Category, error) {
 	if err != nil {
 		return map[int]Category{}, err
 	}
+	c.raw.movieCategories = resp
 
+	// Unmarshal Categories
 	err = json.Unmarshal(resp, &categories)
 	if err != nil {
 		return map[int]Category{}, err
 	}
 
-	// Filter Banned Categories
+	// Map Categories
 	for _, category := range categories {
-		allowed := true
-
-		for _, filter := range c.options.BannedMovies {
-			if strings.Contains(category.Name, filter) {
-				allowed = false
-			}
+		id, err := strconv.Atoi(category.Id)
+		if err != nil {
+			return map[int]Category{}, err
 		}
 
-		if allowed {
-			id, err := strconv.Atoi(category.Id)
-			if err != nil {
-				return map[int]Category{}, err
-			}
-			c.movieCategories[id] = category
-		}
+		c.data.movieCategories[id] = category
 	}
 
-	return c.movieCategories, nil
+	return c.data.movieCategories, nil
 }
 
 func (c *XtreamClient) GetSeriesCategories() (map[int]Category, error) {
-	c.seriesCategories = map[int]Category{}
+	c.data.seriesCategories = map[int]Category{}
 	var categories []Category
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionSeriesCategories)
@@ -102,30 +87,23 @@ func (c *XtreamClient) GetSeriesCategories() (map[int]Category, error) {
 	if err != nil {
 		return map[int]Category{}, err
 	}
+	c.raw.seriesCategories = resp
 
+	// Unmarshal Categories
 	err = json.Unmarshal(resp, &categories)
 	if err != nil {
 		return map[int]Category{}, err
 	}
 
-	// Filter Banned Categories
+	// Map Categories
 	for _, category := range categories {
-		allowed := true
-
-		for _, filter := range c.options.BannedSeries {
-			if strings.Contains(category.Name, filter) {
-				allowed = false
-			}
+		id, err := strconv.Atoi(category.Id)
+		if err != nil {
+			return map[int]Category{}, err
 		}
 
-		if allowed {
-			id, err := strconv.Atoi(category.Id)
-			if err != nil {
-				return map[int]Category{}, err
-			}
-			c.seriesCategories[id] = category
-		}
+		c.data.seriesCategories[id] = category
 	}
 
-	return c.seriesCategories, nil
+	return c.data.seriesCategories, nil
 }

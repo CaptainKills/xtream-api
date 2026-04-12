@@ -26,7 +26,7 @@ type LiveStream struct {
 }
 
 func (c *XtreamClient) GetLiveStreams() (map[int]LiveStream, error) {
-	c.livestreams = map[int]LiveStream{}
+	c.data.livestreams = map[int]LiveStream{}
 	var livestreams []LiveStream
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionLivestreams)
@@ -36,28 +36,20 @@ func (c *XtreamClient) GetLiveStreams() (map[int]LiveStream, error) {
 	if err != nil {
 		return map[int]LiveStream{}, err
 	}
+	c.raw.livestreams = resp
 
+	// Unmarshal LiveStreams
 	err = json.Unmarshal(resp, &livestreams)
 	if err != nil {
 		return map[int]LiveStream{}, err
 	}
 
-	// Filter Banned LiveStreams
+	// Map LiveStreams
 	for _, livestream := range livestreams {
-		allowed := true
-
-		for _, id := range livestream.CategoryIds {
-			if _, ok := c.liveCategories[id]; !ok {
-				allowed = false
-			}
-		}
-
-		if allowed {
-			c.livestreams[livestream.Id] = livestream
-		}
+		c.data.livestreams[livestream.Id] = livestream
 	}
 
-	return c.livestreams, nil
+	return c.data.livestreams, nil
 }
 
 func (l LiveStream) Export(dir string, url string, enableImages bool) (int, int, error) {

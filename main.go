@@ -2,15 +2,12 @@ package main
 
 import (
 	"log"
-	"os"
 	"time"
 
 	xtream "github.com/CaptainKills/xtream-api/api"
 )
 
 func main() {
-	log.SetOutput(os.Stdout)
-
 	// Environment Variables
 	url, username, password := GetEnvironmentCredentials()
 	options := GetEnvironmentOptions()
@@ -28,24 +25,28 @@ func main() {
 	log.Printf("[INFO] Authentication Successful: %s\n", url)
 
 	for {
+		errorOccured := false
 		start := time.Now()
 
 		// Fetch Categories
 		live_categories, err := client.GetLiveStreamCategories()
 		if err != nil {
 			log.Printf("[ERROR] Failed to retrieve LiveStream Categories: %v\n", err)
+			errorOccured = true
 		}
 		log.Printf("[INFO] Found %6d Categories for Livestreams\n", len(live_categories))
 
 		movie_categories, err := client.GetMovieCategories()
 		if err != nil {
 			log.Printf("[ERROR] Failed to retrieve Movie Categories: %v\n", err)
+			errorOccured = true
 		}
 		log.Printf("[INFO] Found %6d Categories for Movies\n", len(movie_categories))
 
 		series_categories, err := client.GetSeriesCategories()
 		if err != nil {
 			log.Printf("[ERROR] Failed to retrieve Series Categories: %v\n", err)
+			errorOccured = true
 		}
 		log.Printf("[INFO] Found %6d Categories for Series\n", len(series_categories))
 
@@ -53,52 +54,82 @@ func main() {
 		livestreams, err := client.GetLiveStreams()
 		if err != nil {
 			log.Printf("[ERROR] Failed to retrieve LiveStreams: %v\n", err)
+			errorOccured = true
 		}
 		log.Printf("[INFO] Found %6d Livestreams\n", len(livestreams))
 
 		movies, err := client.GetMovies()
 		if err != nil {
 			log.Printf("[ERROR] Failed to retrieve Movies: %v\n", err)
+			errorOccured = true
 		}
 		log.Printf("[INFO] Found %6d Movies\n", len(movies))
 
 		series, err := client.GetSeries()
 		if err != nil {
 			log.Printf("[ERROR] Failed to retrieve Series: %v\n", err)
+			errorOccured = true
 		}
 		log.Printf("[INFO] Found %6d Series\n", len(series))
+
+		// Import Cache & Filter
+		err = client.ImportCache()
+		if err != nil {
+			log.Printf("[ERROR] Failed to import cache: %v\n", err)
+			errorOccured = true
+		}
+
+		err = client.Filter()
+		if err != nil {
+			log.Printf("[ERROR] Failed to filter streams: %v\n", err)
+			errorOccured = true
+		}
 
 		// Export LiveStreams
 		err = client.ExportLiveStreams()
 		if err != nil {
 			log.Printf("[ERROR] Unable to export LiveStreams: %v\n", err)
+			errorOccured = true
 		}
 
 		err = client.ValidateLiveStreams()
 		if err != nil {
 			log.Printf("[ERROR] Unable to validate LiveStreams: %v\n", err)
+			errorOccured = true
 		}
 
 		// Export Movies
 		err = client.ExportMovies()
 		if err != nil {
 			log.Printf("[ERROR] Unable to export Movies: %v\n", err)
+			errorOccured = true
 		}
 
 		err = client.ValidateMovies()
 		if err != nil {
 			log.Printf("[ERROR] Unable to validate Movies: %v\n", err)
+			errorOccured = true
 		}
 
 		// Export Series
 		err = client.ExportSeries()
 		if err != nil {
 			log.Printf("[ERROR] Unable to export Series: %v\n", err)
+			errorOccured = true
 		}
 
 		err = client.ValidateSeries()
 		if err != nil {
 			log.Printf("[ERROR] Unable to validate Series: %v\n", err)
+			errorOccured = true
+		}
+
+		// Export Cache
+		if !errorOccured {
+			err = client.ExportCache()
+			if err != nil {
+				log.Printf("[ERROR] Unable to export Cache: %v\n", err)
+			}
 		}
 
 		// Wait until next run
@@ -107,6 +138,6 @@ func main() {
 		next := start.Add(24 * time.Hour)
 
 		log.Printf("[INFO] Run Duration: %s. Next run scheduled at: %s\n", diff.String(), next.Format(time.DateTime))
-		time.Sleep(24 * time.Hour)
+		time.Sleep(time.Until(next))
 	}
 }

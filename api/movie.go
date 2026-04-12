@@ -50,7 +50,7 @@ type ExtraMovieInfo struct {
 }
 
 func (c *XtreamClient) GetMovies() (map[int]Movie, error) {
-	c.movies = map[int]Movie{}
+	c.data.movies = map[int]Movie{}
 	var movies []Movie
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionMovies)
@@ -60,28 +60,20 @@ func (c *XtreamClient) GetMovies() (map[int]Movie, error) {
 	if err != nil {
 		return map[int]Movie{}, err
 	}
+	c.raw.movies = resp
 
+	// Unmarshal Movies
 	err = json.Unmarshal(resp, &movies)
 	if err != nil {
 		return map[int]Movie{}, err
 	}
 
-	// Filter Banned Movies
+	// Map Movies
 	for _, movie := range movies {
-		allowed := true
-
-		for _, id := range movie.CategoryIds {
-			if _, ok := c.movieCategories[id]; !ok {
-				allowed = false
-			}
-		}
-
-		if allowed {
-			c.movies[movie.Id] = movie
-		}
+		c.data.movies[movie.Id] = movie
 	}
 
-	return c.movies, nil
+	return c.data.movies, nil
 }
 
 func (c *XtreamClient) GetMovieInfo(id int) (MovieInfo, error) {

@@ -57,6 +57,15 @@ func GetImageExtension(url string) string {
 	return extension
 }
 
+func WriteJson(file string, data []byte) error {
+	err := writeFile(file, data)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func WriteStream(dir string, file string, url string) (int, error) {
 	updated := 0
 

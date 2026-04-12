@@ -8,7 +8,7 @@ import (
 
 var (
 	encoding = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>"
-	regex    = regexp.MustCompile(`^\[[A-Z]*\]\s`)
+	regex    = regexp.MustCompile(`[sS][0-9]*[eE][0-9]*\s`)
 )
 
 func GenerateMovieNfo(info MovieInfo) string {
@@ -80,10 +80,10 @@ func GenerateSeriesNfo(info SeriesInfo) string {
 
 func GenerateEpisodeNfo(episode Episode) string {
 	builder := &strings.Builder{}
-	startTitle := strings.ReplaceAll(episode.Title, "&", "&amp;")
+	episode.Title = strings.ReplaceAll(episode.Title, "&", "&amp;")
 
 	var title string
-	sections := strings.Split(startTitle, " - ")
+	sections := strings.Split(episode.Title, " - ")
 	for index, part := range sections {
 		if index == 0 {
 			continue
@@ -93,6 +93,7 @@ func GenerateEpisodeNfo(episode Episode) string {
 			title += " "
 		}
 	}
+	title = regex.ReplaceAllString(title, "")
 
 	builder.WriteString(encoding)
 	builder.WriteString("<episodedetails>")
