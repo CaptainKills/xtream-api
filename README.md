@@ -36,16 +36,16 @@ services:
       - XTREAM_PASSWORD=...               # Change to your IPTV Password
 
       # Optional Environment Variables
-      # - XTREAM_IMAGES=false             # Enable/Disable Image Fetching
-      # - XTREAM_NFO=false                # Enable/Disable Metadata Fetching
+      # - XTREAM_IMAGES=true              # Enable Image Fetching
+      # - XTREAM_NFO=true                 # Enable Metadata Fetching
       # - XTREAM_REQUESTS=1000            # Maximum requests per minute
-      # - XTREAM_TIMEOUT=10               # Maximum time before request returns timeout error
+      # - XTREAM_TIMEOUT=30               # Maximum time before request returns timeout error
       # - XTREAM_BANNED_LIVE=""           # ',' Seperated list of banned livestream categories
       # - XTREAM_BANNED_MOVIES=""         # ',' Seperated list of banned movie categories
       # - XTREAM_BANNED_SERIES=""         # ',' Seperated list of banned series categories
     volumes:
-      - /etc/localtime:/etc/localtime:ro
       - ./media:/media                    # Change to your desired media directory on Host
+      - ./cache:/cache                    # Change to your desired cache directory on Host
     restart: unless-stopped
 ```
 
@@ -58,8 +58,8 @@ docker run -d \
   -e XTREAM_URL="..." \
   -e XTREAM_USERNAME="..." \
   -e XTREAM_PASSWORD="..." \
-  -v /etc/localtime:/etc/localtime:ro \
   -v ./media:/media \
+  -v ./cache:/cache \
   captainkills/xtream-api:latest
 ```
 
@@ -69,15 +69,22 @@ The content fetched by this tool will be downloaded in the `/media` directory:
 * `/media/live` directory for Livestream content.
 * `/media/movies` for Movie content.
 * `/media/series` for Series content.
+* `/cache` for caching successfully updated streams for future runs.
+
+### Images & Metadata
 
 If downloading images is enabled, each piece of content will try to download its `cover.jpg` image.
-Image downloading can be disabled using the `XTREAM_IMAGES` environment variable.
+Image downloading can be enabled using the `XTREAM_IMAGES` environment variable.
 
 If downloading metadata is enabled, each piece of content will try to download its `*.nfo` metadata.
-Metadata downloading can be disabled using the `XTREAM_NFO` environment variable.
+Metadata downloading can be enabled using the `XTREAM_NFO` environment variable.
+
+### Rate Limiting
 
 In order to make sure the tool doesn't exceed the rate limit of your IPTV provider, the maximum
 number of requests per minute can be set using the `XTREAM_REQUESTS` environment variable.
+
+### Filtering
 
 In case you want to exclude any content from specific categories, you can include the name or
 substring of a category in the `XTREAM_BANNED_LIVE`, `XTREAM_BANNED_MOVIES` or

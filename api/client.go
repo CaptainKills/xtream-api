@@ -43,7 +43,6 @@ type XtreamClient struct {
 
 	account Account
 	Data    XtreamData
-	Updated XtreamData
 	Old     XtreamData
 
 	Options XtreamOptions
@@ -82,7 +81,7 @@ func NewClient(url string, username string, password string, options XtreamOptio
 	}
 }
 
-func (c *XtreamClient) buildURL(stream string, id int, ext string) (string, error) {
+func (c *XtreamClient) buildURL(stream string, id int, ext string) string {
 	protocol := c.account.ServerInfo.Protocol
 	domain := c.account.ServerInfo.URL
 
@@ -93,14 +92,14 @@ func (c *XtreamClient) buildURL(stream string, id int, ext string) (string, erro
 	case "https":
 		port = c.account.ServerInfo.HttpsPort
 	default:
-		err := fmt.Sprintf("Unknown Server Protocol. Expected http/https, Got %s", protocol)
-		return "", errors.New(err)
+		log.Printf("[WARNING] Unknown Server Protocol. Expected http/https, Got %s", protocol)
+		port = "https"
 	}
 
 	username := c.username
 	password := c.password
 
-	return fmt.Sprintf(queryUrl, protocol, domain, port, stream, username, password, id, ext), nil
+	return fmt.Sprintf(queryUrl, protocol, domain, port, stream, username, password, id, ext)
 }
 
 func (c *XtreamClient) ExportLiveStreams() error {
@@ -128,17 +127,13 @@ func (c *XtreamClient) ExportLiveStreams() error {
 			log.Printf("[DEBUG] (LiveStream) Export Progress: %6d / %6d (%6.2f%%), STRM: %6d, IMG: %6d\n", i+1, length, percentage, updated_streams, updated_images)
 		}
 
-		url, err := c.buildURL(livestream.StreamType, livestream.Id, c.account.UserInfo.AllowedOutputFormats[0])
-		if err != nil {
-			return fmt.Errorf("(%d) %w", livestream.Id, err)
-		}
+		url := c.buildURL(livestream.StreamType, livestream.Id, c.account.UserInfo.AllowedOutputFormats[0])
 
 		updated_stream, updated_image, err := livestream.Export(DirectoryLivestreams, url, c.Options.ImagesEnabled)
 		if err != nil {
 			return fmt.Errorf("(%d) %w", livestream.Id, err)
 		}
 
-		c.Updated.LiveStreams[livestream.Id] = livestream
 		updated_streams += updated_stream
 		updated_images += updated_image
 		i++
@@ -182,17 +177,13 @@ func (c *XtreamClient) ExportMovies() error {
 		// }
 		// movie.Info = info
 
-		url, err := c.buildURL(movie.StreamType, movie.Id, movie.Extension)
-		if err != nil {
-			return fmt.Errorf("(%d) %w", movie.Id, err)
-		}
+		url := c.buildURL(movie.StreamType, movie.Id, movie.Extension)
 
 		updated_stream, updated_image, updated_nfo, err := movie.Export(DirectoryMovies, url, c.Options.ImagesEnabled, c.Options.NfoEnabled)
 		if err != nil {
 			return fmt.Errorf("(%d) %w", movie.Id, err)
 		}
 
-		c.Updated.Movies[movie.Id] = movie
 		updated_streams += updated_stream
 		updated_images += updated_image
 		updated_nfos += updated_nfo
@@ -262,10 +253,7 @@ func (c *XtreamClient) ExportSeries() error {
 					return fmt.Errorf("(%d) %w", show.Id, err)
 				}
 
-				url, err := c.buildURL("series", id, episode.Extension)
-				if err != nil {
-					return fmt.Errorf("(%d) %w", show.Id, err)
-				}
+				url := c.buildURL("series", id, episode.Extension)
 
 				updated_stream, updated_nfo, err := episode.Export(directory, url, c.Options.NfoEnabled)
 				if err != nil {
@@ -277,7 +265,6 @@ func (c *XtreamClient) ExportSeries() error {
 			}
 		}
 
-		c.Updated.Series[show.Id] = show
 		i++
 	}
 

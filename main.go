@@ -77,43 +77,37 @@ func main() {
 		}
 
 		// Export LiveStreams
-		// err = client.ExportLiveStreams()
-		// if err != nil {
-		// 	log.Printf("[ERROR] Unable to export LiveStreams: %v\n", err)
-		// 	errorOccured = true
-		// }
-		//
-		// err = client.ValidateLiveStreams()
-		// if err != nil {
-		// 	log.Printf("[ERROR] Unable to validate LiveStreams: %v\n", err)
-		// 	errorOccured = true
-		// }
+		err = client.ExportLiveStreams()
+		if err != nil {
+			log.Printf("[ERROR] Unable to export LiveStreams: %v\n", err)
+		}
+
+		err = client.ValidateLiveStreams()
+		if err != nil {
+			log.Printf("[ERROR] Unable to validate LiveStreams: %v\n", err)
+		}
 
 		// Export Movies
-		// err = client.ExportMovies()
-		// if err != nil {
-		// 	log.Printf("[ERROR] Unable to export Movies: %v\n", err)
-		// 	errorOccured = true
-		// }
-		//
-		// err = client.ValidateMovies()
-		// if err != nil {
-		// 	log.Printf("[ERROR] Unable to validate Movies: %v\n", err)
-		// 	errorOccured = true
-		// }
+		err = client.ExportMovies()
+		if err != nil {
+			log.Printf("[ERROR] Unable to export Movies: %v\n", err)
+		}
+
+		err = client.ValidateMovies()
+		if err != nil {
+			log.Printf("[ERROR] Unable to validate Movies: %v\n", err)
+		}
 
 		// Export Series
-		// err = client.ExportSeries()
-		// if err != nil {
-		// 	log.Printf("[ERROR] Unable to export Series: %v\n", err)
-		// 	errorOccured = true
-		// }
-		//
-		// err = client.ValidateSeries()
-		// if err != nil {
-		// 	log.Printf("[ERROR] Unable to validate Series: %v\n", err)
-		// 	errorOccured = true
-		// }
+		err = client.ExportSeries()
+		if err != nil {
+			log.Printf("[ERROR] Unable to export Series: %v\n", err)
+		}
+
+		err = client.ValidateSeries()
+		if err != nil {
+			log.Printf("[ERROR] Unable to validate Series: %v\n", err)
+		}
 
 		// Export Cache
 		err = ExportCache(client)

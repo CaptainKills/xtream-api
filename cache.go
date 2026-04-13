@@ -42,17 +42,17 @@ func ExportCache(c *api.XtreamClient) error {
 	}
 
 	// Export Streams
-	err = utils.WriteJson(api.DirectoryCache+fileLiveStreams, c.Updated.Livestreams)
+	err = utils.WriteJson(api.DirectoryCache+fileLiveStreams, c.Data.Livestreams)
 	if err != nil {
 		return err
 	}
 
-	err = utils.WriteJson(api.DirectoryCache+fileMovies, c.Updated.Movies)
+	err = utils.WriteJson(api.DirectoryCache+fileMovies, c.Data.Movies)
 	if err != nil {
 		return err
 	}
 
-	err = utils.WriteJson(api.DirectoryCache+fileSeries, c.Updated.Series)
+	err = utils.WriteJson(api.DirectoryCache+fileSeries, c.Data.Series)
 	if err != nil {
 		return err
 	}
