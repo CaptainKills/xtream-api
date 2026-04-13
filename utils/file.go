@@ -1,7 +1,8 @@
-package api
+package utils
 
 import (
 	"bufio"
+	"encoding/json"
 	"os"
 	"strings"
 )
@@ -57,8 +58,13 @@ func GetImageExtension(url string) string {
 	return extension
 }
 
-func WriteJson(file string, data []byte) error {
-	err := writeFile(file, data)
+func WriteJson(file string, obj any) error {
+	data, err := json.Marshal(obj)
+	if err != nil {
+		return err
+	}
+
+	err = writeFile(file, data)
 	if err != nil {
 		return err
 	}

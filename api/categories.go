@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+
+	"github.com/CaptainKills/xtream-api/utils"
 )
 
 type Category struct {
@@ -13,17 +15,16 @@ type Category struct {
 }
 
 func (c *XtreamClient) GetLiveStreamCategories() (map[int]Category, error) {
-	c.data.liveCategories = map[int]Category{}
+	c.Data.LiveCategories = map[int]Category{}
 	var categories []Category
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionLiveCategories)
 
 	// Fetch Categories
-	resp, err := SendRequest(query)
+	resp, err := utils.SendRequest(query)
 	if err != nil {
 		return map[int]Category{}, err
 	}
-	c.raw.liveCategories = resp
 
 	// Unmarshal Categories
 	err = json.Unmarshal(resp, &categories)
@@ -38,24 +39,23 @@ func (c *XtreamClient) GetLiveStreamCategories() (map[int]Category, error) {
 			return map[int]Category{}, err
 		}
 
-		c.data.liveCategories[id] = category
+		c.Data.LiveCategories[id] = category
 	}
 
-	return c.data.liveCategories, nil
+	return c.Data.LiveCategories, nil
 }
 
 func (c *XtreamClient) GetMovieCategories() (map[int]Category, error) {
-	c.data.movieCategories = map[int]Category{}
+	c.Data.MovieCategories = map[int]Category{}
 	var categories []Category
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionMovieCategories)
 
 	// Fetch Categories
-	resp, err := SendRequest(query)
+	resp, err := utils.SendRequest(query)
 	if err != nil {
 		return map[int]Category{}, err
 	}
-	c.raw.movieCategories = resp
 
 	// Unmarshal Categories
 	err = json.Unmarshal(resp, &categories)
@@ -70,24 +70,23 @@ func (c *XtreamClient) GetMovieCategories() (map[int]Category, error) {
 			return map[int]Category{}, err
 		}
 
-		c.data.movieCategories[id] = category
+		c.Data.MovieCategories[id] = category
 	}
 
-	return c.data.movieCategories, nil
+	return c.Data.MovieCategories, nil
 }
 
 func (c *XtreamClient) GetSeriesCategories() (map[int]Category, error) {
-	c.data.seriesCategories = map[int]Category{}
+	c.Data.SeriesCategories = map[int]Category{}
 	var categories []Category
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionSeriesCategories)
 
 	// Fetch Categories
-	resp, err := SendRequest(query)
+	resp, err := utils.SendRequest(query)
 	if err != nil {
 		return map[int]Category{}, err
 	}
-	c.raw.seriesCategories = resp
 
 	// Unmarshal Categories
 	err = json.Unmarshal(resp, &categories)
@@ -102,8 +101,8 @@ func (c *XtreamClient) GetSeriesCategories() (map[int]Category, error) {
 			return map[int]Category{}, err
 		}
 
-		c.data.seriesCategories[id] = category
+		c.Data.SeriesCategories[id] = category
 	}
 
-	return c.data.seriesCategories, nil
+	return c.Data.SeriesCategories, nil
 }

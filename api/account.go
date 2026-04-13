@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/CaptainKills/xtream-api/utils"
 )
 
 type Account struct {
@@ -42,7 +44,7 @@ func (c *XtreamClient) GetAccountInfo() (Account, error) {
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionAccountInfo)
 
-	resp, err := SendRequest(query)
+	resp, err := utils.SendRequest(query)
 	if err != nil {
 		return Account{}, err
 	}

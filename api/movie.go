@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/CaptainKills/xtream-api/utils"
 )
 
 type Movie struct {
@@ -50,17 +52,16 @@ type ExtraMovieInfo struct {
 }
 
 func (c *XtreamClient) GetMovies() (map[int]Movie, error) {
-	c.data.movies = map[int]Movie{}
+	c.Data.Movies = map[int]Movie{}
 	var movies []Movie
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionMovies)
 
 	// Fetch Movies
-	resp, err := SendRequest(query)
+	resp, err := utils.SendRequest(query)
 	if err != nil {
 		return map[int]Movie{}, err
 	}
-	c.raw.movies = resp
 
 	// Unmarshal Movies
 	err = json.Unmarshal(resp, &movies)
@@ -70,10 +71,10 @@ func (c *XtreamClient) GetMovies() (map[int]Movie, error) {
 
 	// Map Movies
 	for _, movie := range movies {
-		c.data.movies[movie.Id] = movie
+		c.Data.Movies[movie.Id] = movie
 	}
 
-	return c.data.movies, nil
+	return c.Data.Movies, nil
 }
 
 func (c *XtreamClient) GetMovieInfo(id int) (MovieInfo, error) {
@@ -81,7 +82,7 @@ func (c *XtreamClient) GetMovieInfo(id int) (MovieInfo, error) {
 	action := fmt.Sprintf(actionMovieInfo, id)
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, action)
 
-	resp, err := SendRequest(query)
+	resp, err := utils.SendRequest(query)
 	if err != nil {
 		return MovieInfo{}, err
 	}
@@ -99,26 +100,60 @@ func (m Movie) Export(dir string, url string, enableImages bool, enableNfo bool)
 
 	pathDirectory := dir + m.Name
 	pathStream := pathDirectory + "/" + m.Name + ".strm"
-	pathImage := pathDirectory + "/cover" + GetImageExtension(m.Icon)
+	pathImage := pathDirectory + "/cover" + utils.GetImageExtension(m.Icon)
 	pathNfo := pathDirectory + "/movie.nfo"
 
 	// Write Stream to File
-	updated_stream, err := WriteStream(pathDirectory, pathStream, url)
+	updated_stream, err := utils.WriteStream(pathDirectory, pathStream, url)
 	if err != nil {
 		return updated_stream, 0, 0, err
 	}
 
 	// Write Image to File
-	updated_image, err := WriteImage(pathDirectory, pathImage, m.Icon, enableImages)
+	updated_image, err := utils.WriteImage(pathDirectory, pathImage, m.Icon, enableImages)
 	if err != nil {
 		return updated_stream, updated_image, 0, err
 	}
 
 	// Write NFO to File
-	updated_nfo, err := WriteNfo(pathDirectory, pathNfo, GenerateMovieNfo(m.Info), enableNfo)
+	updated_nfo, err := utils.WriteNfo(pathDirectory, pathNfo, m.Info.GenerateNfo(), enableNfo)
 	if err != nil {
 		return updated_stream, updated_image, updated_nfo, err
 	}
 
 	return updated_stream, updated_image, updated_nfo, nil
+}
+
+func (i MovieInfo) GenerateNfo() string {
+	builder := &strings.Builder{}
+
+	builder.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`)
+	builder.WriteString("<movie>")
+
+	fmt.Fprintf(builder, "<title>%s</title>", i.Info.Name)
+	fmt.Fprintf(builder, "<originaltitle>%s</originaltitle>", i.Info.OriginalName)
+	fmt.Fprintf(builder, "<plot>%s</plot>", i.Info.Plot)
+	fmt.Fprintf(builder, "<releasedate>%s</releasedate>", i.Info.ReleaseDate)
+
+	genres := strings.SplitSeq(i.Info.Genre, ", ")
+	for genre := range genres {
+		fmt.Fprintf(builder, "<genre>%s</genre>", genre)
+	}
+
+	directors := strings.SplitSeq(i.Info.Director, ", ")
+	for director := range directors {
+		fmt.Fprintf(builder, "<director>%s</director>", director)
+	}
+
+	actors := strings.Split(i.Info.Cast, ", ")
+	for index, actor := range actors {
+		fmt.Fprintf(builder, "<actor>")
+		fmt.Fprintf(builder, "<name>%s</name>", actor)
+		fmt.Fprintf(builder, "<order>%d</order>", index)
+		fmt.Fprintf(builder, "</actor>")
+	}
+
+	builder.WriteString("</movie>")
+
+	return builder.String()
 }

@@ -1,73 +1,75 @@
-package api
+package main
 
 import (
 	"log"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/CaptainKills/xtream-api/api"
 )
 
-func (c *XtreamClient) Filter() error {
+func Filter(c *api.XtreamClient) error {
 	// Filter Banned Categories: LiveStreams
-	banned, total, err := filterCategories(&c.data.liveCategories, c.options.BannedLiveStreams)
+	banned, total, err := filterCategories(&c.Data.LiveCategories, c.Options.BannedLiveStreams)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[INFO] Banned %6d out of %6d Livestream Categories\t(%6d Remaining)\n", banned, total, len(c.data.liveCategories))
+	log.Printf("[INFO] Banned %6d out of %6d livestream Categories\t(%6d Remaining)\n", banned, total, len(c.Data.LiveCategories))
 
 	// Filter Banned Categories: Movies
-	banned, total, err = filterCategories(&c.data.movieCategories, c.options.BannedMovies)
+	banned, total, err = filterCategories(&c.Data.MovieCategories, c.Options.BannedMovies)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[INFO] Banned %6d out of %6d Movie Categories\t\t(%6d Remaining)\n", banned, total, len(c.data.movieCategories))
+	log.Printf("[INFO] Banned %6d out of %6d Movie Categories\t\t(%6d Remaining)\n", banned, total, len(c.Data.MovieCategories))
 
 	// Filter Banned Categories: Series
-	banned, total, err = filterCategories(&c.data.seriesCategories, c.options.BannedSeries)
+	banned, total, err = filterCategories(&c.Data.SeriesCategories, c.Options.BannedSeries)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[INFO] Banned %6d out of %6d Series Categories\t(%6d Remaining)\n", banned, total, len(c.data.seriesCategories))
+	log.Printf("[INFO] Banned %6d out of %6d Series Categories\t(%6d Remaining)\n", banned, total, len(c.Data.SeriesCategories))
 
 	// Filter Banned & Cached Livestreams
-	filtered, total, err := filterLiveStreams(&c.data.livestreams, c.old.livestreams, c.data.liveCategories)
+	filtered, total, err := filterLiveStreams(&c.Data.Livestreams, c.Old.Livestreams, c.Data.LiveCategories)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[INFO] Filtered %6d out of %6d Livestreams\t(%6d Remaining)\n", filtered, total, len(c.data.livestreams))
+	log.Printf("[INFO] Filtered %6d out of %6d Livestreams\t(%6d Remaining)\n", filtered, total, len(c.Data.Livestreams))
 
 	// Filter Banned & Cached Movies
-	filtered, total, err = filterMovies(&c.data.movies, c.old.movies, c.data.movieCategories)
+	filtered, total, err = filterMovies(&c.Data.Movies, c.Old.Movies, c.Data.MovieCategories)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[INFO] Filtered %6d out of %6d Movies\t\t(%6d Remaining)\n", filtered, total, len(c.data.movies))
+	log.Printf("[INFO] Filtered %6d out of %6d Movies\t\t(%6d Remaining)\n", filtered, total, len(c.Data.Movies))
 
 	// Filter Banned & Cached Series
-	filtered, total, err = filterSeries(&c.data.series, c.old.series, c.data.seriesCategories)
+	filtered, total, err = filterSeries(&c.Data.Series, c.Old.Series, c.Data.SeriesCategories)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[INFO] Filtered %6d out of %6d Series\t\t(%6d Remaining)\n", filtered, total, len(c.data.series))
+	log.Printf("[INFO] Filtered %6d out of %6d Series\t\t(%6d Remaining)\n", filtered, total, len(c.Data.Series))
 
 	return nil
 }
 
-func filterCategories(data *map[int]Category, bannedCategories []string) (int, int, error) {
-	total := len(*data)
+func filterCategories(Data *map[int]api.Category, bannedCategories []string) (int, int, error) {
+	total := len(*Data)
 	banned := 0
 
 	if len(bannedCategories) == 1 && bannedCategories[0] == "" {
 		return banned, total, nil
 	}
 
-	for _, category := range *data {
+	for _, category := range *Data {
 		id, err := strconv.Atoi(category.Id)
 		if err != nil {
 			return 0, 0, err
@@ -75,7 +77,7 @@ func filterCategories(data *map[int]Category, bannedCategories []string) (int, i
 
 		for _, filter := range bannedCategories {
 			if strings.Contains(category.Name, filter) {
-				delete(*data, id)
+				delete(*Data, id)
 				banned++
 			}
 		}
@@ -84,14 +86,14 @@ func filterCategories(data *map[int]Category, bannedCategories []string) (int, i
 	return banned, total, nil
 }
 
-func filterLiveStreams(data *map[int]LiveStream, old map[int]LiveStream, categories map[int]Category) (int, int, error) {
-	total := len(*data)
+func filterLiveStreams(Data *map[int]api.LiveStream, old map[int]api.LiveStream, categories map[int]api.Category) (int, int, error) {
+	total := len(*Data)
 	filtered := 0
 
-	for id, livestream := range *data {
+	for id, livestream := range *Data {
 		if old_stream, ok := old[id]; ok {
 			if reflect.DeepEqual(livestream, old_stream) {
-				delete(*data, id)
+				delete(*Data, id)
 				filtered++
 				continue
 			}
@@ -113,7 +115,7 @@ func filterLiveStreams(data *map[int]LiveStream, old map[int]LiveStream, categor
 			}
 
 			if !allowed {
-				delete(*data, id)
+				delete(*Data, id)
 				filtered++
 			}
 		}
@@ -122,14 +124,14 @@ func filterLiveStreams(data *map[int]LiveStream, old map[int]LiveStream, categor
 	return filtered, total, nil
 }
 
-func filterMovies(data *map[int]Movie, old map[int]Movie, categories map[int]Category) (int, int, error) {
-	total := len(*data)
+func filterMovies(Data *map[int]api.Movie, old map[int]api.Movie, categories map[int]api.Category) (int, int, error) {
+	total := len(*Data)
 	filtered := 0
 
-	for id, movie := range *data {
+	for id, movie := range *Data {
 		if old_stream, ok := old[id]; ok {
 			if reflect.DeepEqual(movie, old_stream) {
-				delete(*data, id)
+				delete(*Data, id)
 				filtered++
 				continue
 			}
@@ -151,7 +153,7 @@ func filterMovies(data *map[int]Movie, old map[int]Movie, categories map[int]Cat
 			}
 
 			if !allowed {
-				delete(*data, id)
+				delete(*Data, id)
 				filtered++
 			}
 		}
@@ -160,14 +162,14 @@ func filterMovies(data *map[int]Movie, old map[int]Movie, categories map[int]Cat
 	return filtered, total, nil
 }
 
-func filterSeries(data *map[int]Series, old map[int]Series, categories map[int]Category) (int, int, error) {
-	total := len(*data)
+func filterSeries(Data *map[int]api.Series, old map[int]api.Series, categories map[int]api.Category) (int, int, error) {
+	total := len(*Data)
 	filtered := 0
 
-	for id, show := range *data {
+	for id, show := range *Data {
 		if old_stream, ok := old[id]; ok {
 			if reflect.DeepEqual(show, old_stream) {
-				delete(*data, id)
+				delete(*Data, id)
 				filtered++
 				continue
 			}
@@ -189,7 +191,7 @@ func filterSeries(data *map[int]Series, old map[int]Series, categories map[int]C
 			}
 
 			if !allowed {
-				delete(*data, id)
+				delete(*Data, id)
 				filtered++
 			}
 		}

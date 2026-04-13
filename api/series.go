@@ -3,7 +3,10 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
+
+	"github.com/CaptainKills/xtream-api/utils"
 )
 
 type Series struct {
@@ -84,17 +87,16 @@ type Episode struct {
 type EpisodeInfo struct{}
 
 func (c *XtreamClient) GetSeries() (map[int]Series, error) {
-	c.data.series = map[int]Series{}
+	c.Data.Series = map[int]Series{}
 	var series []Series
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionSeries)
 
 	// Fetch Series
-	resp, err := SendRequest(query)
+	resp, err := utils.SendRequest(query)
 	if err != nil {
 		return map[int]Series{}, err
 	}
-	c.raw.series = resp
 
 	// Unmarshal Series
 	err = json.Unmarshal(resp, &series)
@@ -104,10 +106,10 @@ func (c *XtreamClient) GetSeries() (map[int]Series, error) {
 
 	// Map Series
 	for _, show := range series {
-		c.data.series[show.Id] = show
+		c.Data.Series[show.Id] = show
 	}
 
-	return c.data.series, nil
+	return c.Data.Series, nil
 }
 
 func (c *XtreamClient) GetSeriesInfo(id int) (SeriesInfo, error) {
@@ -115,7 +117,7 @@ func (c *XtreamClient) GetSeriesInfo(id int) (SeriesInfo, error) {
 	action := fmt.Sprintf(actionSeriesInfo, id)
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, action)
 
-	resp, err := SendRequest(query)
+	resp, err := utils.SendRequest(query)
 	if err != nil {
 		return SeriesInfo{}, err
 	}
@@ -131,22 +133,55 @@ func (c *XtreamClient) GetSeriesInfo(id int) (SeriesInfo, error) {
 func (s Series) Export(dir string, ur string, enabledImages bool, enabledNfo bool) (int, int, error) {
 	s.Name = strings.ReplaceAll(s.Name, "/", "_")
 
-	pathImage := dir + "/cover" + GetImageExtension(s.Cover)
+	pathImage := dir + "/cover" + utils.GetImageExtension(s.Cover)
 	pathNfo := dir + "/tvshow.nfo"
 
 	// Write Image to File
-	updated_image, err := WriteImage(dir, pathImage, s.Cover, enabledImages)
+	updated_image, err := utils.WriteImage(dir, pathImage, s.Cover, enabledImages)
 	if err != nil {
 		return updated_image, 0, err
 	}
 
 	// Write NFO to File
-	updated_nfo, err := WriteNfo(dir, pathNfo, GenerateSeriesNfo(s.Info), enabledNfo)
+	updated_nfo, err := utils.WriteNfo(dir, pathNfo, s.Info.GenerateNfo(), enabledNfo)
 	if err != nil {
 		return updated_image, updated_nfo, err
 	}
 
 	return updated_image, updated_nfo, nil
+}
+
+func (i SeriesInfo) GenerateNfo() string {
+	builder := &strings.Builder{}
+
+	builder.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`)
+	builder.WriteString("<tvshow>")
+
+	fmt.Fprintf(builder, "<title>%s</title>", i.Info.Name)
+	fmt.Fprintf(builder, "<plot>%s</plot>", i.Info.Plot)
+	fmt.Fprintf(builder, "<releasedate>%s</releasedate>", i.Info.ReleaseDate)
+
+	genres := strings.SplitSeq(i.Info.Genre, ", ")
+	for genre := range genres {
+		fmt.Fprintf(builder, "<genre>%s</genre>", genre)
+	}
+
+	directors := strings.SplitSeq(i.Info.Director, ", ")
+	for director := range directors {
+		fmt.Fprintf(builder, "<director>%s</director>", director)
+	}
+
+	actors := strings.Split(i.Info.Cast, ", ")
+	for index, actor := range actors {
+		fmt.Fprintf(builder, "<actor>")
+		fmt.Fprintf(builder, "<name>%s</name>", actor)
+		fmt.Fprintf(builder, "<order>%d</order>", index)
+		fmt.Fprintf(builder, "</actor>")
+	}
+
+	builder.WriteString("</tvshow>")
+
+	return builder.String()
 }
 
 func (e Episode) Export(dir string, url string, enableNfo bool) (int, int, error) {
@@ -156,16 +191,43 @@ func (e Episode) Export(dir string, url string, enableNfo bool) (int, int, error
 	pathNfo := dir + "/" + e.Title + ".nfo"
 
 	// Write Stream to File
-	updated_stream, err := WriteStream(dir, pathStream, url)
+	updated_stream, err := utils.WriteStream(dir, pathStream, url)
 	if err != nil {
 		return updated_stream, 0, err
 	}
 
 	// Write NFO to File
-	updated_nfo, err := WriteNfo(dir, pathNfo, GenerateEpisodeNfo(e), enableNfo)
+	updated_nfo, err := utils.WriteNfo(dir, pathNfo, e.GenerateNfo(), enableNfo)
 	if err != nil {
 		return updated_stream, updated_nfo, err
 	}
 
 	return updated_stream, updated_nfo, nil
+}
+
+func (e Episode) GenerateNfo() string {
+	builder := &strings.Builder{}
+	e.Title = strings.ReplaceAll(e.Title, "&", "&amp;")
+
+	var title string
+	sections := strings.Split(e.Title, " - ")
+	for index, part := range sections {
+		if index == 0 {
+			continue
+		}
+		title += part
+		if index != len(sections)-1 {
+			title += " "
+		}
+	}
+
+	re := regexp.MustCompile(`[sS][0-9]*[eE][0-9]*\s`)
+	title = re.ReplaceAllString(title, "")
+
+	builder.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`)
+	builder.WriteString("<episodedetails>")
+	fmt.Fprintf(builder, "<title>%s</title>", title)
+	builder.WriteString("</episodedetails>")
+
+	return builder.String()
 }

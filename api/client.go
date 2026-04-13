@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/CaptainKills/xtream-api/utils"
 )
 
 const (
@@ -25,11 +27,11 @@ const (
 	actionMovieInfo        = "get_vod_info&vod_id=%d"
 	actionSeriesInfo       = "get_series_info&series_id=%d"
 
-	directoryRoot        = "media/"
-	directoryLivestreams = directoryRoot + "live/"
-	directoryMovies      = directoryRoot + "movies/"
-	directorySeries      = directoryRoot + "series/"
-	directoryCache       = directoryRoot + "cache/"
+	DirectoryRoot        = "media/"
+	DirectoryLivestreams = DirectoryRoot + "live/"
+	DirectoryMovies      = DirectoryRoot + "movies/"
+	DirectorySeries      = DirectoryRoot + "series/"
+	DirectoryCache       = "cache/"
 
 	debugPercent = 100
 )
@@ -40,20 +42,20 @@ type XtreamClient struct {
 	password string
 
 	account Account
-	data    XtreamData
-	old     XtreamData
+	Data    XtreamData
+	Updated XtreamData
+	Old     XtreamData
 
-	options XtreamOptions
-	raw     XtreamRaw
+	Options XtreamOptions
 }
 
 type XtreamData struct {
-	liveCategories   map[int]Category
-	movieCategories  map[int]Category
-	seriesCategories map[int]Category
-	livestreams      map[int]LiveStream
-	movies           map[int]Movie
-	series           map[int]Series
+	LiveCategories   map[int]Category
+	MovieCategories  map[int]Category
+	SeriesCategories map[int]Category
+	Livestreams      map[int]LiveStream
+	Movies           map[int]Movie
+	Series           map[int]Series
 }
 
 type XtreamOptions struct {
@@ -70,13 +72,13 @@ type XtreamOptions struct {
 
 func NewClient(url string, username string, password string, options XtreamOptions) *XtreamClient {
 	// Initialise Request Handler
-	InitRequest(options.RequestPerMinute, options.RequestTimeout)
+	utils.InitRequest(options.RequestPerMinute, options.RequestTimeout)
 
 	return &XtreamClient{
 		url:      url,
 		username: username,
 		password: password,
-		options:  options,
+		Options:  options,
 	}
 }
 
@@ -105,21 +107,21 @@ func (c *XtreamClient) ExportLiveStreams() error {
 	updated_streams := 0
 	updated_images := 0
 
-	if len(c.data.livestreams) == 0 {
+	if len(c.Data.Livestreams) == 0 {
 		return errors.New("No available LiveStreams for export!")
 	}
 
 	log.Printf("[INFO] Exporting LiveStreams...")
 
 	// Create Root Directory
-	err := os.MkdirAll(directoryLivestreams, 0o750)
+	err := os.MkdirAll(DirectoryLivestreams, 0o750)
 	if err != nil {
 		return err
 	}
 
-	length := len(c.data.livestreams)
+	length := len(c.Data.Livestreams)
 	i := 0
-	for _, livestream := range c.data.livestreams {
+	for _, livestream := range c.Data.Livestreams {
 		// Output Progress Information
 		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
@@ -131,10 +133,12 @@ func (c *XtreamClient) ExportLiveStreams() error {
 			return fmt.Errorf("(%d) %w", livestream.Id, err)
 		}
 
-		updated_stream, updated_image, err := livestream.Export(directoryLivestreams, url, c.options.ImagesEnabled)
+		updated_stream, updated_image, err := livestream.Export(DirectoryLivestreams, url, c.Options.ImagesEnabled)
 		if err != nil {
 			return fmt.Errorf("(%d) %w", livestream.Id, err)
 		}
+
+		c.Updated.LiveStreams[livestream.Id] = livestream
 		updated_streams += updated_stream
 		updated_images += updated_image
 		i++
@@ -150,21 +154,21 @@ func (c *XtreamClient) ExportMovies() error {
 	updated_images := 0
 	updated_nfos := 0
 
-	if len(c.data.movies) == 0 {
+	if len(c.Data.Movies) == 0 {
 		return errors.New("No available Movies for export!")
 	}
 
 	log.Printf("[INFO] Exporting Movies...")
 
 	// Create Root Directory
-	err := os.MkdirAll(directoryMovies, 0o750)
+	err := os.MkdirAll(DirectoryMovies, 0o750)
 	if err != nil {
 		return err
 	}
 
-	length := len(c.data.movies)
+	length := len(c.Data.Movies)
 	i := 0
-	for _, movie := range c.data.movies {
+	for _, movie := range c.Data.Movies {
 		// Output Progress Information
 		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
@@ -183,11 +187,12 @@ func (c *XtreamClient) ExportMovies() error {
 			return fmt.Errorf("(%d) %w", movie.Id, err)
 		}
 
-		updated_stream, updated_image, updated_nfo, err := movie.Export(directoryMovies, url, c.options.ImagesEnabled, c.options.NfoEnabled)
+		updated_stream, updated_image, updated_nfo, err := movie.Export(DirectoryMovies, url, c.Options.ImagesEnabled, c.Options.NfoEnabled)
 		if err != nil {
 			return fmt.Errorf("(%d) %w", movie.Id, err)
 		}
 
+		c.Updated.Movies[movie.Id] = movie
 		updated_streams += updated_stream
 		updated_images += updated_image
 		updated_nfos += updated_nfo
@@ -204,20 +209,20 @@ func (c *XtreamClient) ExportSeries() error {
 	updated_images := 0
 	updated_nfos := 0
 
-	if len(c.data.series) == 0 {
+	if len(c.Data.Series) == 0 {
 		return errors.New("No available Series for export!")
 	}
 
 	log.Printf("[INFO] Exporting Series...")
 
-	err := os.MkdirAll(directorySeries, 0o750)
+	err := os.MkdirAll(DirectorySeries, 0o750)
 	if err != nil {
 		return err
 	}
 
-	length := len(c.data.series)
+	length := len(c.Data.Series)
 	i := 0
-	for _, show := range c.data.series {
+	for _, show := range c.Data.Series {
 		// Output Progress Information
 		if i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
@@ -231,13 +236,13 @@ func (c *XtreamClient) ExportSeries() error {
 		}
 		show.Info = info
 
-		pathDirectory := directorySeries + show.Name
+		pathDirectory := DirectorySeries + show.Name
 		err = os.MkdirAll(pathDirectory, 0o750)
 		if err != nil {
 			return fmt.Errorf("(%d) %w", show.Id, err)
 		}
 
-		updated_image, updated_nfo, err := show.Export(pathDirectory, show.Cover, c.options.ImagesEnabled, c.options.NfoEnabled)
+		updated_image, updated_nfo, err := show.Export(pathDirectory, show.Cover, c.Options.ImagesEnabled, c.Options.NfoEnabled)
 		if err != nil {
 			return fmt.Errorf("(%d) %w", show.Id, err)
 		}
@@ -262,7 +267,7 @@ func (c *XtreamClient) ExportSeries() error {
 					return fmt.Errorf("(%d) %w", show.Id, err)
 				}
 
-				updated_stream, updated_nfo, err := episode.Export(directory, url, c.options.NfoEnabled)
+				updated_stream, updated_nfo, err := episode.Export(directory, url, c.Options.NfoEnabled)
 				if err != nil {
 					return fmt.Errorf("(%d) %w", show.Id, err)
 				}
@@ -272,6 +277,7 @@ func (c *XtreamClient) ExportSeries() error {
 			}
 		}
 
+		c.Updated.Series[show.Id] = show
 		i++
 	}
 
@@ -286,7 +292,7 @@ func (c *XtreamClient) ValidateLiveStreams() error {
 
 	log.Printf("[INFO] Validating LiveStreams...")
 
-	root, err := os.ReadDir(directoryLivestreams)
+	root, err := os.ReadDir(DirectoryLivestreams)
 	if err != nil {
 		return err
 	}
@@ -295,14 +301,14 @@ func (c *XtreamClient) ValidateLiveStreams() error {
 		if !dir.IsDir() {
 			log.Printf("[WARNING] Found File in Root Directory: %s\n", dir.Name())
 
-			err := os.Remove(directorySeries + dir.Name())
+			err := os.Remove(DirectorySeries + dir.Name())
 			if err != nil {
 				return err
 			}
 			continue
 		}
 
-		subdir, err := os.ReadDir(directoryLivestreams + dir.Name())
+		subdir, err := os.ReadDir(DirectoryLivestreams + dir.Name())
 		if err != nil {
 			return err
 		}
@@ -324,7 +330,7 @@ func (c *XtreamClient) ValidateLiveStreams() error {
 
 		if nr_of_streams == 0 || nr_of_streams > 1 || nr_of_covers > 1 {
 			log.Printf("[WARNING] Unexpected Number of Files: STRM=%d, IMG=%d | %s\n", nr_of_streams, nr_of_covers, dir.Name())
-			err := c.cleanDirectory(directoryLivestreams+dir.Name(), subdir)
+			err := c.cleanDirectory(DirectoryLivestreams+dir.Name(), subdir)
 			if err != nil {
 				return err
 			}
@@ -342,7 +348,7 @@ func (c *XtreamClient) ValidateMovies() error {
 
 	log.Printf("[INFO] Validating Movies...")
 
-	root, err := os.ReadDir(directoryMovies)
+	root, err := os.ReadDir(DirectoryMovies)
 	if err != nil {
 		return err
 	}
@@ -351,14 +357,14 @@ func (c *XtreamClient) ValidateMovies() error {
 		if !dir.IsDir() {
 			log.Printf("[WARNING] Found File in Root Directory: %s\n", dir.Name())
 
-			err := os.Remove(directorySeries + dir.Name())
+			err := os.Remove(DirectorySeries + dir.Name())
 			if err != nil {
 				return err
 			}
 			continue
 		}
 
-		subdir, err := os.ReadDir(directoryMovies + dir.Name())
+		subdir, err := os.ReadDir(DirectoryMovies + dir.Name())
 		if err != nil {
 			return err
 		}
@@ -380,7 +386,7 @@ func (c *XtreamClient) ValidateMovies() error {
 
 		if nr_of_streams == 0 || nr_of_streams > 1 || nr_of_covers > 1 {
 			log.Printf("[WARNING] Unexpected Number of Files: STRM=%d, IMG=%d | %s\n", nr_of_streams, nr_of_covers, dir.Name())
-			err := c.cleanDirectory(directoryMovies+dir.Name(), subdir)
+			err := c.cleanDirectory(DirectoryMovies+dir.Name(), subdir)
 			if err != nil {
 				return err
 			}
@@ -398,7 +404,7 @@ func (c *XtreamClient) ValidateSeries() error {
 
 	log.Printf("[INFO] Validating Series...")
 
-	root, err := os.ReadDir(directorySeries)
+	root, err := os.ReadDir(DirectorySeries)
 	if err != nil {
 		return err
 	}
@@ -407,14 +413,14 @@ func (c *XtreamClient) ValidateSeries() error {
 		if !dir.IsDir() {
 			log.Printf("[WARNING] Found File in Root Directory: %s\n", dir.Name())
 
-			err := os.Remove(directorySeries + dir.Name())
+			err := os.Remove(DirectorySeries + dir.Name())
 			if err != nil {
 				return err
 			}
 			continue
 		}
 
-		subdir, err := os.ReadDir(directorySeries + dir.Name())
+		subdir, err := os.ReadDir(DirectorySeries + dir.Name())
 		if err != nil {
 			return err
 		}
@@ -436,7 +442,7 @@ func (c *XtreamClient) ValidateSeries() error {
 
 		if nr_of_covers > 1 {
 			log.Printf("[WARNING] Unexpected Number of Files: STRM=%d, IMG=%d | %s\n", nr_of_streams, nr_of_covers, dir.Name())
-			err := c.cleanDirectory(directorySeries+dir.Name(), subdir)
+			err := c.cleanDirectory(DirectorySeries+dir.Name(), subdir)
 			if err != nil {
 				return err
 			}

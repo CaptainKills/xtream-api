@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"github.com/CaptainKills/xtream-api/utils"
 )
 
 type LiveStream struct {
@@ -26,17 +28,16 @@ type LiveStream struct {
 }
 
 func (c *XtreamClient) GetLiveStreams() (map[int]LiveStream, error) {
-	c.data.livestreams = map[int]LiveStream{}
+	c.Data.Livestreams = map[int]LiveStream{}
 	var livestreams []LiveStream
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionLivestreams)
 
 	// Fetch LiveStreams
-	resp, err := SendRequest(query)
+	resp, err := utils.SendRequest(query)
 	if err != nil {
 		return map[int]LiveStream{}, err
 	}
-	c.raw.livestreams = resp
 
 	// Unmarshal LiveStreams
 	err = json.Unmarshal(resp, &livestreams)
@@ -46,10 +47,10 @@ func (c *XtreamClient) GetLiveStreams() (map[int]LiveStream, error) {
 
 	// Map LiveStreams
 	for _, livestream := range livestreams {
-		c.data.livestreams[livestream.Id] = livestream
+		c.Data.Livestreams[livestream.Id] = livestream
 	}
 
-	return c.data.livestreams, nil
+	return c.Data.Livestreams, nil
 }
 
 func (l LiveStream) Export(dir string, url string, enableImages bool) (int, int, error) {
@@ -57,16 +58,16 @@ func (l LiveStream) Export(dir string, url string, enableImages bool) (int, int,
 
 	pathDirectory := dir + l.Name
 	pathFile := pathDirectory + "/" + l.Name + ".strm"
-	pathImage := pathDirectory + "/cover" + GetImageExtension(l.Icon)
+	pathImage := pathDirectory + "/cover" + utils.GetImageExtension(l.Icon)
 
 	// Write Stream to File
-	updated_stream, err := WriteStream(pathDirectory, pathFile, url)
+	updated_stream, err := utils.WriteStream(pathDirectory, pathFile, url)
 	if err != nil {
 		return updated_stream, 0, err
 	}
 
 	// Write Image to File
-	updated_image, err := WriteImage(pathDirectory, pathImage, l.Icon, enableImages)
+	updated_image, err := utils.WriteImage(pathDirectory, pathImage, l.Icon, enableImages)
 	if err != nil {
 		return updated_stream, updated_image, err
 	}
