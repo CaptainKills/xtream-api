@@ -7,6 +7,17 @@ import (
 	xtream "github.com/CaptainKills/xtream-api/api"
 )
 
+const (
+	directoryRoot        = "media/"
+	directoryLivestreams = directoryRoot + "live/"
+	directoryMovies      = directoryRoot + "movies/"
+	directorySeries      = directoryRoot + "series/"
+
+	directoryCache = "cache/"
+
+	debugPercent = 100
+)
+
 func main() {
 	// Environment Variables
 	url, username, password := GetEnvironmentCredentials()
@@ -65,54 +76,59 @@ func main() {
 		}
 		log.Printf("[INFO] Found %6d Series\n", len(series))
 
-		// Import Cache & Filter
-		err = ImportCache(client)
+		// Filter Categories
+		err = FilterCategories(&client.Options, &live_categories, &movie_categories, &series_categories)
 		if err != nil {
-			log.Printf("[ERROR] Failed to import cache: %v\n", err)
+			log.Printf("[ERROR] Failted to filter categories: %v\n", err)
 		}
 
-		err = Filter(client)
+		// Filter Streams
+		err = FilterLiveStreams(client, &livestreams, live_categories)
 		if err != nil {
-			log.Printf("[ERROR] Failed to filter streams: %v\n", err)
+			log.Printf("[ERROR] Failed to filter Livestreams: %v\n", err)
+		}
+
+		err = FilterMovies(client, &movies, movie_categories)
+		if err != nil {
+			log.Printf("[ERROR] Failed to filter Movies: %v\n", err)
+		}
+
+		err = FilterSeries(client, &series, series_categories)
+		if err != nil {
+			log.Printf("[ERROR] Failed to filter Series: %v\n", err)
 		}
 
 		// Export LiveStreams
-		err = client.ExportLiveStreams()
+		err = ExportLiveStreams(client, &livestreams)
 		if err != nil {
 			log.Printf("[ERROR] Unable to export LiveStreams: %v\n", err)
 		}
 
-		err = client.ValidateLiveStreams()
+		err = ValidateLiveStreams()
 		if err != nil {
 			log.Printf("[ERROR] Unable to validate LiveStreams: %v\n", err)
 		}
 
 		// Export Movies
-		err = client.ExportMovies()
+		err = ExportMovies(client, &movies)
 		if err != nil {
 			log.Printf("[ERROR] Unable to export Movies: %v\n", err)
 		}
 
-		err = client.ValidateMovies()
+		err = ValidateMovies()
 		if err != nil {
 			log.Printf("[ERROR] Unable to validate Movies: %v\n", err)
 		}
 
 		// Export Series
-		err = client.ExportSeries()
+		err = ExportSeries(client, &series)
 		if err != nil {
 			log.Printf("[ERROR] Unable to export Series: %v\n", err)
 		}
 
-		err = client.ValidateSeries()
+		err = ValidateSeries()
 		if err != nil {
 			log.Printf("[ERROR] Unable to validate Series: %v\n", err)
-		}
-
-		// Export Cache
-		err = ExportCache(client)
-		if err != nil {
-			log.Printf("[ERROR] Unable to export Cache: %v\n", err)
 		}
 
 		// Wait until next run

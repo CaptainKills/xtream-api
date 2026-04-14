@@ -45,7 +45,6 @@ services:
       # - XTREAM_BANNED_SERIES=""         # ',' Seperated list of banned series categories
     volumes:
       - ./media:/media                    # Change to your desired media directory on Host
-      - ./cache:/cache                    # Change to your desired cache directory on Host
     restart: unless-stopped
 ```
 
@@ -59,7 +58,6 @@ docker run -d \
   -e XTREAM_USERNAME="..." \
   -e XTREAM_PASSWORD="..." \
   -v ./media:/media \
-  -v ./cache:/cache \
   captainkills/xtream-api:latest
 ```
 
@@ -69,7 +67,6 @@ The content fetched by this tool will be downloaded in the `/media` directory:
 * `/media/live` directory for Livestream content.
 * `/media/movies` for Movie content.
 * `/media/series` for Series content.
-* `/cache` for caching successfully updated streams for future runs.
 
 ### Images & Metadata
 

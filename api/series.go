@@ -3,7 +3,9 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/CaptainKills/xtream-api/utils"
@@ -29,8 +31,6 @@ type Series struct {
 	ReleaseDate2   string `json:"release_date"`  // time.Time
 	TMDB           string `json:"tmdb"`          // int
 	Trailer        string `json:"youtube_trailer"`
-
-	Info SeriesInfo
 }
 
 type SeriesInfo struct {
@@ -87,13 +87,13 @@ type Episode struct {
 type EpisodeInfo struct{}
 
 func (c *XtreamClient) GetSeries() (map[int]Series, error) {
-	c.Data.Series = map[int]Series{}
 	var series []Series
+	series_map := map[int]Series{}
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionSeries)
 
 	// Fetch Series
-	resp, err := utils.SendRequest(query)
+	resp, err := c.sendRequest(query)
 	if err != nil {
 		return map[int]Series{}, err
 	}
@@ -106,10 +106,10 @@ func (c *XtreamClient) GetSeries() (map[int]Series, error) {
 
 	// Map Series
 	for _, show := range series {
-		c.Data.Series[show.Id] = show
+		series_map[show.Id] = show
 	}
 
-	return c.Data.Series, nil
+	return series_map, nil
 }
 
 func (c *XtreamClient) GetSeriesInfo(id int) (SeriesInfo, error) {
@@ -117,7 +117,7 @@ func (c *XtreamClient) GetSeriesInfo(id int) (SeriesInfo, error) {
 	action := fmt.Sprintf(actionSeriesInfo, id)
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, action)
 
-	resp, err := utils.SendRequest(query)
+	resp, err := c.sendRequest(query)
 	if err != nil {
 		return SeriesInfo{}, err
 	}
@@ -130,25 +130,76 @@ func (c *XtreamClient) GetSeriesInfo(id int) (SeriesInfo, error) {
 	return info, nil
 }
 
-func (s Series) Export(dir string, ur string, enabledImages bool, enabledNfo bool) (int, int, error) {
+func (s Series) Export(c *XtreamClient, dir string) (int, int, int, error) {
+	updated_streams := 0
+	updated_images := 0
+	updated_nfos := 0
+
 	s.Name = strings.ReplaceAll(s.Name, "/", "_")
 
+	pathDirectory := dir + s.Name
 	pathImage := dir + "/cover" + utils.GetImageExtension(s.Cover)
 	pathNfo := dir + "/tvshow.nfo"
 
-	// Write Image to File
-	updated_image, err := utils.WriteImage(dir, pathImage, s.Cover, enabledImages)
+	// Create Subdirectory
+	err := os.Mkdir(pathDirectory, 0o750)
+	if err != nil && !os.IsExist(err) {
+		return updated_streams, updated_images, updated_nfos, err
+	}
+
+	// Fetch Series Info
+	info, err := c.GetSeriesInfo(s.Id)
 	if err != nil {
-		return updated_image, 0, err
+		return updated_streams, updated_images, updated_nfos, err
+	}
+
+	// Write Episodes to File
+	for season, episodes := range info.Episodes {
+		pathSeason := pathDirectory + "/Season " + season
+
+		// Create Season Subdirectory
+		err := os.Mkdir(pathSeason, 0o750)
+		if err != nil && !os.IsExist(err) {
+			return updated_streams, updated_images, updated_nfos, err
+		}
+
+		for _, episode := range episodes {
+			updated_stream, updated_nfo, err := episode.Export(c, pathSeason)
+			if err != nil {
+				return updated_streams, updated_images, updated_nfos, err
+			}
+
+			updated_streams += updated_stream
+			updated_nfos += updated_nfo
+		}
+	}
+
+	// Write Image to File
+	if c.Options.ImagesEnabled && !utils.ImageExists(pathImage) {
+		image, err := c.sendRequest(s.Cover)
+		if err != nil {
+			return updated_streams, updated_images, updated_nfos, err
+		}
+
+		updated_image, err := utils.WriteImage(pathImage, image)
+		if err != nil {
+			return updated_streams, updated_images, updated_nfos, err
+		}
+
+		updated_images += updated_image
 	}
 
 	// Write NFO to File
-	updated_nfo, err := utils.WriteNfo(dir, pathNfo, s.Info.GenerateNfo(), enabledNfo)
-	if err != nil {
-		return updated_image, updated_nfo, err
+	if c.Options.NfoEnabled {
+		updated_nfo, err := utils.WriteFile(pathNfo, info.GenerateNfo())
+		if err != nil {
+			return updated_streams, updated_images, updated_nfos, err
+		}
+
+		updated_nfos += updated_nfo
 	}
 
-	return updated_image, updated_nfo, nil
+	return updated_streams, updated_images, updated_nfos, nil
 }
 
 func (i SeriesInfo) GenerateNfo() string {
@@ -184,22 +235,33 @@ func (i SeriesInfo) GenerateNfo() string {
 	return builder.String()
 }
 
-func (e Episode) Export(dir string, url string, enableNfo bool) (int, int, error) {
+func (e Episode) Export(c *XtreamClient, dir string) (int, int, error) {
+	updated_stream := 0
+	updated_nfo := 0
+
 	e.Title = strings.ReplaceAll(e.Title, "/", "_")
 
 	pathStream := dir + "/" + e.Title + ".strm"
 	pathNfo := dir + "/" + e.Title + ".nfo"
 
-	// Write Stream to File
-	updated_stream, err := utils.WriteStream(dir, pathStream, url)
+	id, err := strconv.Atoi(e.Id)
 	if err != nil {
-		return updated_stream, 0, err
+		return updated_stream, updated_nfo, err
+	}
+	url := c.buildURL("series", id, e.Extension)
+
+	// Write Stream to File
+	updated_stream, err = utils.WriteFile(pathStream, url)
+	if err != nil {
+		return updated_stream, updated_nfo, err
 	}
 
 	// Write NFO to File
-	updated_nfo, err := utils.WriteNfo(dir, pathNfo, e.GenerateNfo(), enableNfo)
-	if err != nil {
-		return updated_stream, updated_nfo, err
+	if c.Options.NfoEnabled {
+		updated_nfo, err = utils.WriteFile(pathNfo, e.GenerateNfo())
+		if err != nil {
+			return updated_stream, updated_nfo, err
+		}
 	}
 
 	return updated_stream, updated_nfo, nil

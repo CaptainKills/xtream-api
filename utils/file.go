@@ -3,6 +3,7 @@ package utils
 import (
 	"bufio"
 	"encoding/json"
+	"log"
 	"os"
 	"strings"
 )
@@ -58,6 +59,20 @@ func GetImageExtension(url string) string {
 	return extension
 }
 
+func ImageExists(file string) bool {
+	f, err := os.Open(file)
+
+	if err != nil && os.IsNotExist(err) {
+		return false
+	} else if err != nil {
+		log.Printf("[WARNING] Failed to check if image exists: %v\n", err)
+		return false
+	}
+
+	defer f.Close()
+	return true
+}
+
 func WriteJson(file string, obj any) error {
 	data, err := json.Marshal(obj)
 	if err != nil {
@@ -72,25 +87,19 @@ func WriteJson(file string, obj any) error {
 	return nil
 }
 
-func WriteStream(dir string, file string, url string) (int, error) {
+func WriteFile(file string, data string) (int, error) {
 	updated := 0
 
-	// Create Subdirectory
-	err := os.Mkdir(dir, 0o750)
-	if err != nil && !os.IsExist(err) {
-		return updated, err
-	}
-
 	// Try to read existing .strm file
-	data, err := readFile(file)
+	f, err := readFile(file)
 	if err != nil {
 		return updated, err
 	}
 
 	// Check if .strm already exists & has the correct stream
-	if data != url {
+	if f != data {
 		// In case .strm does not exist or has the incorrect stream, overwrite file
-		err := writeFile(file, []byte(url))
+		err := writeFile(file, []byte(data))
 		if err != nil {
 			return updated, err
 		}
@@ -100,67 +109,11 @@ func WriteStream(dir string, file string, url string) (int, error) {
 	return updated, nil
 }
 
-func WriteImage(dir string, file string, url string, enabled bool) (int, error) {
-	updated := 0
-
-	// If string is invalid http(s) link, do not update image
-	if !strings.HasPrefix(url, "http") || !enabled {
-		return 0, nil
-	}
-
-	// Open existing Image File, if it exists
-	f, err := os.Open(file)
-	f.Close()
-
-	if err != nil && !os.IsNotExist(err) {
-		return updated, err
-	} else if os.IsNotExist(err) {
-		// In case Image does not exist, download & create file
-		image, err := SendRequest(url)
-		if err != nil {
-			// If image fetch fails, skip image creation, without error
-			return updated, nil
-		}
-
-		err = writeFile(file, image)
-		if err != nil {
-			return updated, err
-		}
-		updated = 1
-	}
-
-	return updated, nil
-}
-
-func WriteNfo(dir string, file string, nfo string, enabled bool) (int, error) {
-	updated := 0
-
-	// If NFO is disabled, do not create file
-	if !enabled {
-		return 0, nil
-	}
-
-	// Create Subdirectory
-	err := os.Mkdir(dir, 0o750)
-	if err != nil && !os.IsExist(err) {
-		return updated, err
-	}
-
-	// Try to read existing .strm file
-	data, err := readFile(file)
+func WriteImage(file string, image []byte) (int, error) {
+	err := writeFile(file, image)
 	if err != nil {
-		return updated, err
+		return 0, err
 	}
 
-	// Check if .strm already exists & has the correct stream
-	if data != nfo {
-		// In case .strm does not exist or has the incorrect stream, overwrite file
-		err := writeFile(file, []byte(nfo))
-		if err != nil {
-			return updated, err
-		}
-		updated = 1
-	}
-
-	return updated, nil
+	return 1, nil
 }

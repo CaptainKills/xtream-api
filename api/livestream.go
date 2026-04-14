@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/CaptainKills/xtream-api/utils"
@@ -28,13 +29,13 @@ type LiveStream struct {
 }
 
 func (c *XtreamClient) GetLiveStreams() (map[int]LiveStream, error) {
-	c.Data.Livestreams = map[int]LiveStream{}
 	var livestreams []LiveStream
+	livestream_map := map[int]LiveStream{}
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionLivestreams)
 
 	// Fetch LiveStreams
-	resp, err := utils.SendRequest(query)
+	resp, err := c.sendRequest(query)
 	if err != nil {
 		return map[int]LiveStream{}, err
 	}
@@ -47,29 +48,46 @@ func (c *XtreamClient) GetLiveStreams() (map[int]LiveStream, error) {
 
 	// Map LiveStreams
 	for _, livestream := range livestreams {
-		c.Data.Livestreams[livestream.Id] = livestream
+		livestream_map[livestream.Id] = livestream
 	}
 
-	return c.Data.Livestreams, nil
+	return livestream_map, nil
 }
 
-func (l LiveStream) Export(dir string, url string, enableImages bool) (int, int, error) {
+func (l LiveStream) Export(c *XtreamClient, dir string) (int, int, error) {
+	updated_stream := 0
+	updated_image := 0
+
 	l.Name = strings.ReplaceAll(l.Name, "/", "_")
 
 	pathDirectory := dir + l.Name
-	pathFile := pathDirectory + "/" + l.Name + ".strm"
+	pathStream := pathDirectory + "/" + l.Name + ".strm"
 	pathImage := pathDirectory + "/cover" + utils.GetImageExtension(l.Icon)
+	url := c.buildURL(l.StreamType, l.Id, c.account.UserInfo.AllowedOutputFormats[0])
+
+	// Create Subdirectory
+	err := os.Mkdir(pathDirectory, 0o750)
+	if err != nil && !os.IsExist(err) {
+		return updated_stream, updated_image, err
+	}
 
 	// Write Stream to File
-	updated_stream, err := utils.WriteStream(pathDirectory, pathFile, url)
+	updated_stream, err = utils.WriteFile(pathStream, url)
 	if err != nil {
-		return updated_stream, 0, err
+		return updated_stream, updated_image, err
 	}
 
 	// Write Image to File
-	updated_image, err := utils.WriteImage(pathDirectory, pathImage, l.Icon, enableImages)
-	if err != nil {
-		return updated_stream, updated_image, err
+	if c.Options.ImagesEnabled && !utils.ImageExists(pathImage) {
+		image, err := c.sendRequest(l.Icon)
+		if err != nil {
+			return updated_stream, updated_image, err
+		}
+
+		updated_image, err = utils.WriteImage(pathImage, image)
+		if err != nil {
+			return updated_stream, updated_image, err
+		}
 	}
 
 	return updated_stream, updated_image, nil

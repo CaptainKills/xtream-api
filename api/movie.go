@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/CaptainKills/xtream-api/utils"
@@ -25,8 +26,6 @@ type Movie struct {
 	StreamType string `json:"stream_type"`
 	// TMDB       string `json:"tmdb"` // int
 	Trailer string `json:"trailer"`
-
-	Info MovieInfo
 }
 
 type MovieInfo struct {
@@ -52,13 +51,13 @@ type ExtraMovieInfo struct {
 }
 
 func (c *XtreamClient) GetMovies() (map[int]Movie, error) {
-	c.Data.Movies = map[int]Movie{}
 	var movies []Movie
+	movie_map := map[int]Movie{}
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionMovies)
 
 	// Fetch Movies
-	resp, err := utils.SendRequest(query)
+	resp, err := c.sendRequest(query)
 	if err != nil {
 		return map[int]Movie{}, err
 	}
@@ -71,10 +70,10 @@ func (c *XtreamClient) GetMovies() (map[int]Movie, error) {
 
 	// Map Movies
 	for _, movie := range movies {
-		c.Data.Movies[movie.Id] = movie
+		movie_map[movie.Id] = movie
 	}
 
-	return c.Data.Movies, nil
+	return movie_map, nil
 }
 
 func (c *XtreamClient) GetMovieInfo(id int) (MovieInfo, error) {
@@ -82,7 +81,7 @@ func (c *XtreamClient) GetMovieInfo(id int) (MovieInfo, error) {
 	action := fmt.Sprintf(actionMovieInfo, id)
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, action)
 
-	resp, err := utils.SendRequest(query)
+	resp, err := c.sendRequest(query)
 	if err != nil {
 		return MovieInfo{}, err
 	}
@@ -95,30 +94,55 @@ func (c *XtreamClient) GetMovieInfo(id int) (MovieInfo, error) {
 	return info, nil
 }
 
-func (m Movie) Export(dir string, url string, enableImages bool, enableNfo bool) (int, int, int, error) {
+func (m Movie) Export(c *XtreamClient, dir string) (int, int, int, error) {
+	updated_stream := 0
+	updated_image := 0
+	updated_nfo := 0
+
 	m.Name = strings.ReplaceAll(m.Name, "/", "_")
 
 	pathDirectory := dir + m.Name
 	pathStream := pathDirectory + "/" + m.Name + ".strm"
 	pathImage := pathDirectory + "/cover" + utils.GetImageExtension(m.Icon)
 	pathNfo := pathDirectory + "/movie.nfo"
+	url := c.buildURL(m.StreamType, m.Id, m.Extension)
+
+	// Create Subdirectory
+	err := os.Mkdir(pathDirectory, 0o750)
+	if err != nil && !os.IsExist(err) {
+		return updated_stream, updated_image, updated_nfo, err
+	}
 
 	// Write Stream to File
-	updated_stream, err := utils.WriteStream(pathDirectory, pathStream, url)
+	updated_stream, err = utils.WriteFile(pathStream, url)
 	if err != nil {
-		return updated_stream, 0, 0, err
+		return updated_stream, updated_image, updated_nfo, err
 	}
 
 	// Write Image to File
-	updated_image, err := utils.WriteImage(pathDirectory, pathImage, m.Icon, enableImages)
-	if err != nil {
-		return updated_stream, updated_image, 0, err
+	if c.Options.ImagesEnabled && !utils.ImageExists(pathImage) {
+		image, err := c.sendRequest(m.Icon)
+		if err != nil {
+			return updated_stream, updated_image, updated_nfo, err
+		}
+
+		updated_image, err = utils.WriteImage(pathImage, image)
+		if err != nil {
+			return updated_stream, updated_image, updated_nfo, err
+		}
 	}
 
 	// Write NFO to File
-	updated_nfo, err := utils.WriteNfo(pathDirectory, pathNfo, m.Info.GenerateNfo(), enableNfo)
-	if err != nil {
-		return updated_stream, updated_image, updated_nfo, err
+	if c.Options.NfoEnabled {
+		info, err := c.GetMovieInfo(m.Id)
+		if err != nil {
+			return updated_stream, updated_image, updated_nfo, err
+		}
+
+		updated_nfo, err = utils.WriteFile(pathNfo, info.GenerateNfo())
+		if err != nil {
+			return updated_stream, updated_image, updated_nfo, err
+		}
 	}
 
 	return updated_stream, updated_image, updated_nfo, nil

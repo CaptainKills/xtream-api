@@ -4,24 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-
-	"github.com/CaptainKills/xtream-api/utils"
 )
 
 type Category struct {
-	Id     string `json:"category_id"` // int
+	Id     string `json:"category_id"`
 	Name   string `json:"category_name"`
 	Parent int    `json:"parent_id"`
 }
 
 func (c *XtreamClient) GetLiveStreamCategories() (map[int]Category, error) {
-	c.Data.LiveCategories = map[int]Category{}
 	var categories []Category
+	category_map := map[int]Category{}
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionLiveCategories)
 
 	// Fetch Categories
-	resp, err := utils.SendRequest(query)
+	resp, err := c.sendRequest(query)
 	if err != nil {
 		return map[int]Category{}, err
 	}
@@ -39,20 +37,20 @@ func (c *XtreamClient) GetLiveStreamCategories() (map[int]Category, error) {
 			return map[int]Category{}, err
 		}
 
-		c.Data.LiveCategories[id] = category
+		category_map[id] = category
 	}
 
-	return c.Data.LiveCategories, nil
+	return category_map, nil
 }
 
 func (c *XtreamClient) GetMovieCategories() (map[int]Category, error) {
-	c.Data.MovieCategories = map[int]Category{}
 	var categories []Category
+	category_map := map[int]Category{}
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionMovieCategories)
 
 	// Fetch Categories
-	resp, err := utils.SendRequest(query)
+	resp, err := c.sendRequest(query)
 	if err != nil {
 		return map[int]Category{}, err
 	}
@@ -70,20 +68,20 @@ func (c *XtreamClient) GetMovieCategories() (map[int]Category, error) {
 			return map[int]Category{}, err
 		}
 
-		c.Data.MovieCategories[id] = category
+		category_map[id] = category
 	}
 
-	return c.Data.MovieCategories, nil
+	return category_map, nil
 }
 
 func (c *XtreamClient) GetSeriesCategories() (map[int]Category, error) {
-	c.Data.SeriesCategories = map[int]Category{}
 	var categories []Category
+	category_map := map[int]Category{}
 
 	query := fmt.Sprintf(queryApi, c.url, c.username, c.password, actionSeriesCategories)
 
 	// Fetch Categories
-	resp, err := utils.SendRequest(query)
+	resp, err := c.sendRequest(query)
 	if err != nil {
 		return map[int]Category{}, err
 	}
@@ -101,8 +99,8 @@ func (c *XtreamClient) GetSeriesCategories() (map[int]Category, error) {
 			return map[int]Category{}, err
 		}
 
-		c.Data.SeriesCategories[id] = category
+		category_map[id] = category
 	}
 
-	return c.Data.SeriesCategories, nil
+	return category_map, nil
 }
