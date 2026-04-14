@@ -9,22 +9,27 @@ Player.
 
 | **Variables**           | **Description**                                                         | **Default** |
 | ----------------------- | ----------------------------------------------------------------------- | ----------- |
-| `XTREAM_URL`            | The URL used for fetching IPTV streams.                                 | `""`        |
-| `XTREAM_USERNAME`       | The Username used to log in to the IPTV service.                        | `""`        |
-| `XTREAM_PASSWORD`       | The Password used to log in to the IPTV service.                        | `""`        |
+| `XTREAM_URL`            | The URL used for fetching IPTV streams.                                 | ` `        |
+| `XTREAM_USERNAME`       | The Username used to log in to the IPTV service.                        | ` `        |
+| `XTREAM_PASSWORD`       | The Password used to log in to the IPTV service.                        | ` `        |
+| `XTREAM_LAUNCH`         | The time at which the tool should run, in `hh:mm:ss` format.*           | ` `        |
 | `XTREAM_IMAGES`         | Whether the tool should download images alongside stream file.          | `false`     |
 | `XTREAM_NFO`            | Whether the tool should download metadata alongside stream file.        | `false`     |
 | `XTREAM_REQUESTS`       | The maximum number of requests per minute.                              | `1000`      |
 | `XTREAM_TIMEOUT`        | The maximum time before a request returns a timeout error, in seconds.  | `30`        |
-| `XTREAM_BANNED_LIVE`    | A ',' separated list of banned livestream (partial) **category** names. | `[]`        |
-| `XTREAM_BANNED_MOVIES`  | A ',' separated list of banned movie (partial) **category** names.      | `[]`        |
-| `XTREAM_BANNED_SERIES`  | A ',' separated list of banned series (partial) **category** names.     | `[]`        |
+| `XTREAM_BANNED_LIVE`    | A ',' separated list of banned livestream (partial) **category** names. | ` `        |
+| `XTREAM_BANNED_MOVIES`  | A ',' separated list of banned movie (partial) **category** names.      | ` `        |
+| `XTREAM_BANNED_SERIES`  | A ',' separated list of banned series (partial) **category** names.     | ` `        |
+
+**NOTE:** In case `XTREAM_LAUNCH` is not specified, the tool will run immediately. After that, every
+24 hours from that time onwards. If `XTREAM_LAUNCH` is properly specified, it will run at every 24
+hours at that specific time.
 
 ## Docker Compose
 
 Here is an example of how to use this tool as a docker container, using a docker compose file:
 
-```docker-compose
+```yaml
 ---
 services:
   xtream-api:
@@ -36,6 +41,7 @@ services:
       - XTREAM_PASSWORD=...               # Change to your IPTV Password
 
       # Optional Environment Variables
+      # - XTREAM_LAUNCH="00:00:00"        # Set Launch Time at 00:00:00 (Midnight)
       # - XTREAM_IMAGES=true              # Enable Image Fetching
       # - XTREAM_NFO=true                 # Enable Metadata Fetching
       # - XTREAM_REQUESTS=1000            # Maximum requests per minute
@@ -45,6 +51,7 @@ services:
       # - XTREAM_BANNED_SERIES=""         # ',' Seperated list of banned series categories
     volumes:
       - ./media:/media                    # Change to your desired media directory on Host
+      - ./cache:/cache                    # Change to your desired cache directory on Host
     restart: unless-stopped
 ```
 
@@ -58,6 +65,7 @@ docker run -d \
   -e XTREAM_USERNAME="..." \
   -e XTREAM_PASSWORD="..." \
   -v ./media:/media \
+  -v ./cache:/cache \
   captainkills/xtream-api:latest
 ```
 
@@ -67,6 +75,8 @@ The content fetched by this tool will be downloaded in the `/media` directory:
 * `/media/live` directory for Livestream content.
 * `/media/movies` for Movie content.
 * `/media/series` for Series content.
+
+The tool will use the `/cache` directory to store any cached content for future runs.
 
 ### Images & Metadata
 
@@ -95,3 +105,12 @@ export XTREAM_BANNED_MOVIES="[DE],[FR],[UK]"
 
 Specific categories can be excluded by writing the full category name, and groups of categories can
 be excluded by writing a substring that is present in all categories of that group.
+
+### Caching
+
+Many IPTV providers have a huge content library. Fetching all of this data every time is going to be
+very time and energy consuming. To mitigate this, caching is used. The first time the tool is
+launched, it will gather all the data from the IPTV provider. Once it has completed the initial run,
+it will cache all the processed entries into a JSON file in the `/cache` directory. All runs from
+here on out will use these cached entries to check if any entries don't need updating, and can be
+skipped. This will massively save time and requests on successive runs.

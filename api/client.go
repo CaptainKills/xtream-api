@@ -40,6 +40,8 @@ type XtreamClient struct {
 }
 
 type XtreamOptions struct {
+	LaunchTime time.Time
+
 	ImagesEnabled bool
 	NfoEnabled    bool
 

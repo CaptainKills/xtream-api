@@ -17,6 +17,7 @@ const (
 	ENV_PASSWORD = "XTREAM_PASSWORD"
 
 	// Optional Environment Variables
+	ENV_LAUNCH   = "XTREAM_LAUNCH"
 	ENV_IMAGES   = "XTREAM_IMAGES"
 	ENV_NFO      = "XTREAM_NFO"
 	ENV_REQUESTS = "XTREAM_REQUESTS"
@@ -51,6 +52,25 @@ func GetEnvironmentCredentials() (string, string, string) {
 
 func GetEnvironmentOptions() api.XtreamOptions {
 	var options api.XtreamOptions
+
+	// Launch Time
+	launch := os.Getenv(ENV_LAUNCH)
+	if launch != "" {
+		t, err := time.Parse(time.TimeOnly, launch)
+		if err != nil {
+			log.Printf("[WARNING] '%s' Environment Variable Invalid!\n", ENV_LAUNCH)
+			options.LaunchTime = time.Date(0, 0, 1, 0, 0, 0, 0, time.Now().Location())
+		} else {
+			now := time.Now()
+			options.LaunchTime = time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), t.Minute(), t.Second(), 0, now.Location())
+
+			if now.After(options.LaunchTime) {
+				options.LaunchTime = options.LaunchTime.AddDate(0, 0, 1)
+			}
+		}
+	} else {
+		options.LaunchTime = time.Date(0, 0, 1, 0, 0, 0, 0, time.Now().Location())
+	}
 
 	// Images Enabled
 	images := os.Getenv(ENV_IMAGES)
