@@ -4,7 +4,7 @@ import (
 	"log"
 	"time"
 
-	xtream "github.com/CaptainKills/xtream-api/api"
+	"github.com/CaptainKills/xtream-api/api"
 )
 
 const (
@@ -28,7 +28,7 @@ func main() {
 	}
 
 	// Xtream Client
-	client := xtream.NewClient(url, username, password, options)
+	client := api.NewClient(url, username, password, options)
 	_, err := client.GetAccountInfo()
 	if err != nil {
 		log.Fatalf("[ERROR] Authentication Failed: %v\n", err)

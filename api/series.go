@@ -36,7 +36,7 @@ type Series struct {
 type SeriesInfo struct {
 	Episodes map[string][]Episode `json:"episodes"`
 	Info     ExtraSeriesInfo      `json:"info"`
-	Seasons  []Season             `json:"seasons"`
+	// Seasons  []Season             `json:"seasons"`
 }
 
 type ExtraSeriesInfo struct {
@@ -59,29 +59,16 @@ type ExtraSeriesInfo struct {
 	// Trailer        string `json:"youtube_trailer"`
 }
 
-type Season struct {
-	// AirDate      string `json:"air_date"` // time.Time
-	// Cover        string `json:"cover"`
-	// CoverBig     string `json:"cover_big"`
-	// CoverTMDB    string `json:"cover_tmdb"`
-	// Duration     string `json:"duration"`      // int
-	// EpisodeCount string `json:"episode_count"` // int
-	Name   string `json:"name"`
-	Number int    `json:"season_number"`
-	// Overview     string `json:"overview"`
-	// ReleaseDate  string `json:"releaseDate"` // time.Time
-}
-
 type Episode struct {
-	// Added        string `json:"added"` // time.Time
-	// CustomSID    string `json:"custom_sid"`
-	// DirectSource string `json:"direct_source"`
-	Extension string `json:"container_extension"`
-	Id        string `json:"id"` // int
-	// Info         EpisodeInfo `json:"info"`
-	// Number int    `json:"episode_num"`
-	// Season int    `json:"season"` // int
-	Title string `json:"title"`
+	Added        string      `json:"added"` // time.Time
+	CustomSID    string      `json:"custom_sid"`
+	DirectSource string      `json:"direct_source"`
+	Extension    string      `json:"container_extension"`
+	Id           string      `json:"id"` // int
+	Info         EpisodeInfo `json:"info"`
+	Number       int         `json:"episode_num"`
+	Season       int         `json:"season"`
+	Title        string      `json:"title"`
 }
 
 type EpisodeInfo struct{}
@@ -175,18 +162,19 @@ func (s Series) Export(c *XtreamClient, dir string) (int, int, int, error) {
 	}
 
 	// Write Image to File
-	if c.Options.ImagesEnabled && !utils.ImageExists(pathImage) {
+	if c.Options.ImagesEnabled && !utils.ImageExists(pathImage) && strings.HasPrefix(s.Cover, "http") {
 		image, err := c.sendRequest(s.Cover)
 		if err != nil {
-			return updated_streams, updated_images, updated_nfos, err
-		}
+			// Ignore error for image fetching
+			// log.Printf("[WARNING] Failed to fetch Image: %v\n", err)
+		} else {
+			updated_image, err := utils.WriteImage(pathImage, image)
+			if err != nil {
+				return updated_streams, updated_images, updated_nfos, err
+			}
 
-		updated_image, err := utils.WriteImage(pathImage, image)
-		if err != nil {
-			return updated_streams, updated_images, updated_nfos, err
+			updated_images += updated_image
 		}
-
-		updated_images += updated_image
 	}
 
 	// Write NFO to File

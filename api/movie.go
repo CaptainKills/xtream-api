@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -34,20 +35,28 @@ type MovieInfo struct {
 }
 
 type ExtraMovieInfo struct {
-	// BackdropPath []string `json:"backdrop_path"`
-	Cast string `json:"cast"`
-	// Cover        string   `json:"cover_big"`
-	Director string `json:"director"`
-	// Duration     string   `json:"duration"` // time.Time
-	// DurationSecs int      `json:"duration_secs"`
+	Actors       string   `json:"actors"`
+	Age          string   `json:"age"` // int
+	BackdropPath []string `json:"backdrop_path"`
+	Bitrate      int      `json:"bitrate"`
+	Cast         string   `json:"cast"`
+	Country      string   `json:"country"`
+	Cover        string   `json:"cover_big"`
+	Description  string   `json:"description"`
+	Director     string   `json:"director"`
+	Duration     string   `json:"duration"` // time.Time
+	// DurationSecs string `json:"duration_secs"` // int
 	Genre        string `json:"genre"`
+	Image        string `json:"movie_image"`
+	KinoUrl      string `json:"kinopoisk_url"`
 	Name         string `json:"name"`
 	OriginalName string `json:"o_name"`
 	Plot         string `json:"plot"`
-	// Rating       string   `json:"rating"`      // float64
+	// Rating string `json:"rating"` // float64
 	ReleaseDate string `json:"releasedate"` // time.Time
-	// TMDB         int      `json:"tmdb"`
-	// Trailer      string   `json:"youtube_trailer"`
+	// RunTime string `json:"episode_run_time"` // int
+	TMDB    int    `json:"tmdb"`
+	Trailer string `json:"youtube_trailer"`
 }
 
 func (c *XtreamClient) GetMovies() (map[int]Movie, error) {
@@ -120,15 +129,16 @@ func (m Movie) Export(c *XtreamClient, dir string) (int, int, int, error) {
 	}
 
 	// Write Image to File
-	if c.Options.ImagesEnabled && !utils.ImageExists(pathImage) {
+	if c.Options.ImagesEnabled && !utils.ImageExists(pathImage) && strings.HasPrefix(m.Icon, "http") {
 		image, err := c.sendRequest(m.Icon)
 		if err != nil {
-			return updated_stream, updated_image, updated_nfo, err
-		}
-
-		updated_image, err = utils.WriteImage(pathImage, image)
-		if err != nil {
-			return updated_stream, updated_image, updated_nfo, err
+			// Ignore error for image fetching
+			// log.Printf("[WARNING] Failed to fetch Image: %v\n", err)
+		} else {
+			updated_image, err = utils.WriteImage(pathImage, image)
+			if err != nil {
+				return updated_stream, updated_image, updated_nfo, err
+			}
 		}
 	}
 
@@ -136,12 +146,13 @@ func (m Movie) Export(c *XtreamClient, dir string) (int, int, int, error) {
 	if c.Options.NfoEnabled {
 		info, err := c.GetMovieInfo(m.Id)
 		if err != nil {
-			return updated_stream, updated_image, updated_nfo, err
-		}
-
-		updated_nfo, err = utils.WriteFile(pathNfo, info.GenerateNfo())
-		if err != nil {
-			return updated_stream, updated_image, updated_nfo, err
+			// Ignore error for info fetching
+			log.Printf("[WARNING] Failed to fetch Movie Info: %v\n", err)
+		} else {
+			updated_nfo, err = utils.WriteFile(pathNfo, info.GenerateNfo())
+			if err != nil {
+				return updated_stream, updated_image, updated_nfo, err
+			}
 		}
 	}
 

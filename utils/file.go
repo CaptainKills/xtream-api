@@ -90,15 +90,15 @@ func WriteJson(file string, obj any) error {
 func WriteFile(file string, data string) (int, error) {
 	updated := 0
 
-	// Try to read existing .strm file
+	// Try to read existing file
 	f, err := readFile(file)
 	if err != nil {
 		return updated, err
 	}
 
-	// Check if .strm already exists & has the correct stream
+	// Check if file already exists & has the correct stream
 	if f != data {
-		// In case .strm does not exist or has the incorrect stream, overwrite file
+		// In case file does not exist or has the incorrect data, overwrite file
 		err := writeFile(file, []byte(data))
 		if err != nil {
 			return updated, err

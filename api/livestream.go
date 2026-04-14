@@ -15,7 +15,7 @@ type LiveStream struct {
 	CategoryIds  []int  `json:"category_ids"`
 	CustomSID    string `json:"custom_sid"`
 	DirectSource string `json:"direct_source"`
-	EpgId        string `json:"epg_channel_id"` // int
+	EpgId        string `json:"epg_channel_id"`
 	Icon         string `json:"stream_icon"`
 	Id           int    `json:"stream_id"`
 	IsAdult      int    `json:"is_adult"` // bool
@@ -23,9 +23,9 @@ type LiveStream struct {
 	Number       int    `json:"num"`
 	StreamType   string `json:"stream_type"`
 	TvArchive    int    `json:"tv_archive"`
-	// TvArchiveDuration string `json:"tv_archive_duration"` // int
-	// CatchupDurationDays int  `json:"catchup_duration_days"`
-	// HasCatchup          bool `json:"has_catchup"`
+	// TvArchiveDuration   string `json:"tv_archive_duration"` // int
+	CatchupDurationDays int  `json:"catchup_duration_days"`
+	HasCatchup          bool `json:"has_catchup"`
 }
 
 func (c *XtreamClient) GetLiveStreams() (map[int]LiveStream, error) {
@@ -78,15 +78,16 @@ func (l LiveStream) Export(c *XtreamClient, dir string) (int, int, error) {
 	}
 
 	// Write Image to File
-	if c.Options.ImagesEnabled && !utils.ImageExists(pathImage) {
+	if c.Options.ImagesEnabled && !utils.ImageExists(pathImage) && strings.HasPrefix(l.Icon, "http") {
 		image, err := c.sendRequest(l.Icon)
 		if err != nil {
-			return updated_stream, updated_image, err
-		}
-
-		updated_image, err = utils.WriteImage(pathImage, image)
-		if err != nil {
-			return updated_stream, updated_image, err
+			// Ignore error for image fetching
+			// log.Printf("[WARNING] Failed to fetch Image: %v\n", err)
+		} else {
+			updated_image, err = utils.WriteImage(pathImage, image)
+			if err != nil {
+				return updated_stream, updated_image, err
+			}
 		}
 	}
 
