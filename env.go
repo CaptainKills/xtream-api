@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	xtream "github.com/CaptainKills/xtream-api/api"
+	"github.com/CaptainKills/xtream-api/api"
 )
 
 const (
@@ -49,8 +49,8 @@ func GetEnvironmentCredentials() (string, string, string) {
 	return url, username, password
 }
 
-func GetEnvironmentOptions() xtream.XtreamOptions {
-	var options xtream.XtreamOptions
+func GetEnvironmentOptions() api.XtreamOptions {
+	var options api.XtreamOptions
 
 	// Images Enabled
 	images := os.Getenv(ENV_IMAGES)
