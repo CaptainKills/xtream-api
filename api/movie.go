@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -147,7 +146,7 @@ func (m Movie) Export(c *XtreamClient, dir string) (int, int, int, error) {
 		info, err := c.GetMovieInfo(m.Id)
 		if err != nil {
 			// Ignore error for info fetching
-			log.Printf("[WARNING] Failed to fetch Movie Info: %v\n", err)
+			// log.Printf("[WARNING] Failed to fetch Movie Info: %v\n", err)
 		} else {
 			updated_nfo, err = utils.WriteFile(pathNfo, info.GenerateNfo())
 			if err != nil {
