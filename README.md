@@ -14,7 +14,7 @@ Player.
 | `XTREAM_PASSWORD`       | The Password used to log in to the IPTV service.                        | ` `        |
 | `XTREAM_LAUNCH`         | The time at which the tool should run, in `hh:mm:ss` format.*           | ` `        |
 | `XTREAM_IMAGES`         | Whether the tool should download images alongside stream file.          | `false`     |
-| `XTREAM_NFO`            | Whether the tool should download metadata alongside stream file.        | `false`     |
+| `XTREAM_METADATA`       | Whether the tool should download metadata alongside stream file.        | `false`     |
 | `XTREAM_REQUESTS`       | The maximum number of requests per minute.                              | `1000`      |
 | `XTREAM_TIMEOUT`        | The maximum time before a request returns a timeout error, in seconds.  | `30`        |
 | `XTREAM_BANNED_LIVE`    | A ',' separated list of banned livestream (partial) **category** names. | ` `        |
@@ -43,7 +43,7 @@ services:
       # Optional Environment Variables
       # - XTREAM_LAUNCH="00:00:00"        # Set Launch Time at 00:00:00 (Midnight)
       # - XTREAM_IMAGES=true              # Enable Image Fetching
-      # - XTREAM_NFO=true                 # Enable Metadata Fetching
+      # - XTREAM_METADATA=true            # Enable Metadata Fetching
       # - XTREAM_REQUESTS=1000            # Maximum requests per minute
       # - XTREAM_TIMEOUT=30               # Maximum time before request returns timeout error
       # - XTREAM_BANNED_LIVE=""           # ',' Seperated list of banned livestream categories
@@ -84,7 +84,7 @@ If downloading images is enabled, each piece of content will try to download its
 Image downloading can be enabled using the `XTREAM_IMAGES` environment variable.
 
 If downloading metadata is enabled, each piece of content will try to download its `*.nfo` metadata.
-Metadata downloading can be enabled using the `XTREAM_NFO` environment variable.
+Metadata downloading can be enabled using the `XTREAM_METADATA` environment variable.
 
 ### Rate Limiting
 

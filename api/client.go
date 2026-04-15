@@ -42,8 +42,8 @@ type XtreamClient struct {
 type XtreamOptions struct {
 	LaunchTime time.Time
 
-	ImagesEnabled bool
-	NfoEnabled    bool
+	ImagesEnabled   bool
+	MetadataEnabled bool
 
 	RequestPerMinute time.Duration
 	RequestTimeout   time.Duration

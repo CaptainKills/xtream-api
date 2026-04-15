@@ -142,7 +142,7 @@ func (m Movie) Export(c *XtreamClient, dir string) (int, int, int, error) {
 	}
 
 	// Write NFO to File
-	if c.Options.NfoEnabled {
+	if c.Options.MetadataEnabled {
 		info, err := c.GetMovieInfo(m.Id)
 		if err != nil {
 			// Ignore error for info fetching

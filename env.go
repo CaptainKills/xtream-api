@@ -19,7 +19,7 @@ const (
 	// Optional Environment Variables
 	ENV_LAUNCH   = "XTREAM_LAUNCH"
 	ENV_IMAGES   = "XTREAM_IMAGES"
-	ENV_NFO      = "XTREAM_NFO"
+	ENV_METADATA = "XTREAM_METADATA"
 	ENV_REQUESTS = "XTREAM_REQUESTS"
 	ENV_TIMEOUT  = "XTREAM_TIMEOUT"
 
@@ -89,19 +89,19 @@ func GetEnvironmentOptions() api.XtreamOptions {
 	}
 
 	// NFO Enabled
-	nfo := os.Getenv(ENV_NFO)
-	if nfo != "" {
-		switch nfo {
+	metadata := os.Getenv(ENV_METADATA)
+	if metadata != "" {
+		switch metadata {
 		case "true":
-			options.NfoEnabled = true
+			options.MetadataEnabled = true
 		case "false":
-			options.NfoEnabled = false
+			options.MetadataEnabled = false
 		default:
-			log.Printf("[WARNING] '%s' Environment Variable Invalid!\n", ENV_NFO)
-			options.NfoEnabled = false
+			log.Printf("[WARNING] '%s' Environment Variable Invalid!\n", ENV_METADATA)
+			options.MetadataEnabled = false
 		}
 	} else {
-		options.NfoEnabled = false
+		options.MetadataEnabled = false
 	}
 
 	// Request Per Minute

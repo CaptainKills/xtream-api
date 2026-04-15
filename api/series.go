@@ -178,7 +178,7 @@ func (s Series) Export(c *XtreamClient, dir string) (int, int, int, error) {
 	}
 
 	// Write NFO to File
-	if c.Options.NfoEnabled {
+	if c.Options.MetadataEnabled {
 		updated_nfo, err := utils.WriteFile(pathNfo, info.GenerateNfo())
 		if err != nil {
 			return updated_streams, updated_images, updated_nfos, err
@@ -245,7 +245,7 @@ func (e Episode) Export(c *XtreamClient, dir string) (int, int, error) {
 	}
 
 	// Write NFO to File
-	if c.Options.NfoEnabled {
+	if c.Options.MetadataEnabled {
 		updated_nfo, err = utils.WriteFile(pathNfo, e.GenerateNfo())
 		if err != nil {
 			return updated_stream, updated_nfo, err
