@@ -27,6 +27,8 @@ const (
 	actionSeriesInfo       = "get_series_info&series_id=%d"
 )
 
+var xmlHeader = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>` + "\n"
+
 type XtreamClient struct {
 	url      string
 	username string

@@ -45,7 +45,7 @@ func WriteFile(file string, data string) (int, error) {
 
 	// Try to read existing file
 	f, err := os.ReadFile(file)
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		return updated, err
 	}
 

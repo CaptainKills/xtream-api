@@ -2,7 +2,9 @@ package api
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
+	"log"
 	"os"
 	"regexp"
 	"strconv"
@@ -36,42 +38,33 @@ type Series struct {
 type SeriesInfo struct {
 	Episodes map[string][]Episode `json:"episodes"`
 	Info     ExtraSeriesInfo      `json:"info"`
-	// Seasons  []Season             `json:"seasons"`
 }
 
 type ExtraSeriesInfo struct {
-	// BackdropPath   []string `json:"backdrop_path"`
-	Cast string `json:"cast"`
-	// CategoryId     string `json:"category_id"` // int
-	// CategoryIds    []int  `json:"category_ids"`
-	Cover    string `json:"cover"`
-	Director string `json:"director"`
-	// EpisodeRunTime string `json:"episode_run_time"` // int
-	Genre string `json:"genre"`
-	// LastModified   string `json:"last_modified"` // time.Time
-	Name string `json:"name"`
-	Plot string `json:"plot"`
-	// Rating         string `json:"rating"`        // float64
-	// Rating5Based   string `json:"rating_5based"` // float64
-	ReleaseDate string `json:"releaseDate"` // time.Time
-	// ReleaseDate2   string `json:"release_date"`  // time.Time
-	// TMDB           string `json:"tmdb"`
-	// Trailer        string `json:"youtube_trailer"`
+	ActorArray    []Actor  `xml:"actor"`
+	Cast          string   `json:"cast" xml:"-"`
+	Cover         string   `json:"cover" xml:"-"`
+	Director      string   `json:"director" xml:"-"`
+	DirectorArray []string `xml:"director"`
+	Genre         string   `json:"genre" xml:"-"`
+	GenreArray    []string `xml:"genre"`
+	Name          string   `json:"name" xml:"title"`
+	Plot          string   `json:"plot" xml:"plot"`
+	ReleaseDate   string   `json:"releaseDate" xml:"releasedate"` // time.Time
+	XMLName       xml.Name `xml:"tvshow"`
 }
 
 type Episode struct {
-	Added        string      `json:"added"` // time.Time
-	CustomSID    string      `json:"custom_sid"`
-	DirectSource string      `json:"direct_source"`
-	Extension    string      `json:"container_extension"`
-	Id           string      `json:"id"` // int
-	Info         EpisodeInfo `json:"info"`
-	Number       int         `json:"episode_num"`
-	Season       int         `json:"season"`
-	Title        string      `json:"title"`
+	Added        string   `json:"added" xml:"-"` // time.Time
+	CustomSID    string   `json:"custom_sid" xml:"-"`
+	DirectSource string   `json:"direct_source" xml:"-"`
+	Extension    string   `json:"container_extension" xml:"-"`
+	Id           string   `json:"id" xml:"-"` // int
+	Number       int      `json:"episode_num" xml:"episode"`
+	Season       int      `json:"season" xml:"season"`
+	Title        string   `json:"title" xml:"title"`
+	XMLName      xml.Name `xml:"episodeinfo"`
 }
-
-type EpisodeInfo struct{}
 
 func (c *XtreamClient) GetSeries() (map[int]Series, error) {
 	var series []Series
@@ -191,36 +184,27 @@ func (s Series) Export(c *XtreamClient, dir string) (int, int, int, error) {
 }
 
 func (i SeriesInfo) GenerateNfo() string {
-	builder := &strings.Builder{}
-
-	builder.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`)
-	builder.WriteString("<tvshow>")
-
-	fmt.Fprintf(builder, "<title>%s</title>", i.Info.Name)
-	fmt.Fprintf(builder, "<plot>%s</plot>", i.Info.Plot)
-	fmt.Fprintf(builder, "<releasedate>%s</releasedate>", i.Info.ReleaseDate)
-
-	genres := strings.SplitSeq(i.Info.Genre, ", ")
+	genres := strings.SplitSeq(i.Info.Genre, ",")
 	for genre := range genres {
-		fmt.Fprintf(builder, "<genre>%s</genre>", genre)
+		i.Info.GenreArray = append(i.Info.GenreArray, strings.Trim(genre, " "))
 	}
 
-	directors := strings.SplitSeq(i.Info.Director, ", ")
+	directors := strings.SplitSeq(i.Info.Director, ",")
 	for director := range directors {
-		fmt.Fprintf(builder, "<director>%s</director>", director)
+		i.Info.DirectorArray = append(i.Info.DirectorArray, strings.Trim(director, " "))
 	}
 
-	actors := strings.Split(i.Info.Cast, ", ")
+	actors := strings.Split(i.Info.Cast, ",")
 	for index, actor := range actors {
-		fmt.Fprintf(builder, "<actor>")
-		fmt.Fprintf(builder, "<name>%s</name>", actor)
-		fmt.Fprintf(builder, "<order>%d</order>", index)
-		fmt.Fprintf(builder, "</actor>")
+		i.Info.ActorArray = append(i.Info.ActorArray, Actor{Name: strings.Trim(actor, " "), Order: index})
 	}
 
-	builder.WriteString("</tvshow>")
+	nfo, err := xml.MarshalIndent(i.Info, "", "  ")
+	if err != nil {
+		log.Println(err)
+	}
 
-	return builder.String()
+	return xmlHeader + string(nfo)
 }
 
 func (e Episode) Export(c *XtreamClient, dir string) (int, int, error) {
@@ -256,28 +240,27 @@ func (e Episode) Export(c *XtreamClient, dir string) (int, int, error) {
 }
 
 func (e Episode) GenerateNfo() string {
-	builder := &strings.Builder{}
-	e.Title = strings.ReplaceAll(e.Title, "&", "&amp;")
+	var title strings.Builder
 
-	var title string
 	sections := strings.Split(e.Title, " - ")
 	for index, part := range sections {
-		if index == 0 {
+		if index == 0 && len(sections) > 1 {
 			continue
 		}
-		title += part
+		title.WriteString(part)
 		if index != len(sections)-1 {
-			title += " "
+			title.WriteString(" ")
 		}
 	}
 
 	re := regexp.MustCompile(`[sS][0-9]*[eE][0-9]*\s`)
-	title = re.ReplaceAllString(title, "")
+	e.Title = re.ReplaceAllString(title.String(), "")
+	e.Title = strings.Trim(e.Title, " ")
 
-	builder.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`)
-	builder.WriteString("<episodedetails>")
-	fmt.Fprintf(builder, "<title>%s</title>", title)
-	builder.WriteString("</episodedetails>")
+	nfo, err := xml.MarshalIndent(e, "", "  ")
+	if err != nil {
+		log.Println(err)
+	}
 
-	return builder.String()
+	return xmlHeader + string(nfo)
 }

@@ -2,7 +2,9 @@ package api
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -22,40 +24,33 @@ type Movie struct {
 	Name         string `json:"name"`
 	Number       int    `json:"num"`
 	Rating       string `json:"rating"` // float64
-	// Rating5Based string `json:"rating_5based"` // float64
-	StreamType string `json:"stream_type"`
-	// TMDB       string `json:"tmdb"` // int
-	Trailer string `json:"trailer"`
+	StreamType   string `json:"stream_type"`
+	Trailer      string `json:"trailer"`
 }
 
 type MovieInfo struct {
 	Info ExtraMovieInfo `json:"info"`
-	// Data MovieData      `json:"movie_data"`
 }
 
 type ExtraMovieInfo struct {
-	Actors       string   `json:"actors"`
-	Age          string   `json:"age"` // int
-	BackdropPath []string `json:"backdrop_path"`
-	Bitrate      int      `json:"bitrate"`
-	Cast         string   `json:"cast"`
-	Country      string   `json:"country"`
-	Cover        string   `json:"cover_big"`
-	Description  string   `json:"description"`
-	Director     string   `json:"director"`
-	Duration     string   `json:"duration"` // time.Time
-	// DurationSecs string `json:"duration_secs"` // int
-	Genre        string `json:"genre"`
-	Image        string `json:"movie_image"`
-	KinoUrl      string `json:"kinopoisk_url"`
-	Name         string `json:"name"`
-	OriginalName string `json:"o_name"`
-	Plot         string `json:"plot"`
-	// Rating string `json:"rating"` // float64
-	ReleaseDate string `json:"releasedate"` // time.Time
-	// RunTime string `json:"episode_run_time"` // int
-	TMDB    int    `json:"tmdb"`
-	Trailer string `json:"youtube_trailer"`
+	ActorArray    []Actor  `xml:"actor"`
+	Actors        string   `json:"actors" xml:"-"`
+	Bitrate       int      `json:"bitrate" xml:"-"`
+	Cast          string   `json:"cast" xml:"-"`
+	Director      string   `json:"director" xml:"-"`
+	DirectorArray []string `xml:"director"`
+	Genre         string   `json:"genre" xml:"-"`
+	GenreArray    []string `xml:"genre"`
+	Name          string   `json:"name" xml:"title"`
+	OriginalName  string   `json:"o_name" xml:"originaltitle"`
+	Plot          string   `json:"plot" xml:"plot"`
+	ReleaseDate   string   `json:"releasedate" xml:"releasedate"` // time.Time
+	XMLName       xml.Name `xml:"movie"`
+}
+
+type Actor struct {
+	Name  string `xml:"name"`
+	Order int    `xml:"order"`
 }
 
 func (c *XtreamClient) GetMovies() (map[int]Movie, error) {
@@ -159,35 +154,25 @@ func (m Movie) Export(c *XtreamClient, dir string) (int, int, int, error) {
 }
 
 func (i MovieInfo) GenerateNfo() string {
-	builder := &strings.Builder{}
-
-	builder.WriteString(`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`)
-	builder.WriteString("<movie>")
-
-	fmt.Fprintf(builder, "<title>%s</title>", i.Info.Name)
-	fmt.Fprintf(builder, "<originaltitle>%s</originaltitle>", i.Info.OriginalName)
-	fmt.Fprintf(builder, "<plot>%s</plot>", i.Info.Plot)
-	fmt.Fprintf(builder, "<releasedate>%s</releasedate>", i.Info.ReleaseDate)
-
-	genres := strings.SplitSeq(i.Info.Genre, ", ")
+	genres := strings.SplitSeq(i.Info.Genre, ",")
 	for genre := range genres {
-		fmt.Fprintf(builder, "<genre>%s</genre>", genre)
+		i.Info.GenreArray = append(i.Info.GenreArray, strings.Trim(genre, " "))
 	}
 
-	directors := strings.SplitSeq(i.Info.Director, ", ")
+	directors := strings.SplitSeq(i.Info.Director, ",")
 	for director := range directors {
-		fmt.Fprintf(builder, "<director>%s</director>", director)
+		i.Info.DirectorArray = append(i.Info.DirectorArray, strings.Trim(director, " "))
 	}
 
-	actors := strings.Split(i.Info.Cast, ", ")
+	actors := strings.Split(i.Info.Cast, ",")
 	for index, actor := range actors {
-		fmt.Fprintf(builder, "<actor>")
-		fmt.Fprintf(builder, "<name>%s</name>", actor)
-		fmt.Fprintf(builder, "<order>%d</order>", index)
-		fmt.Fprintf(builder, "</actor>")
+		i.Info.ActorArray = append(i.Info.ActorArray, Actor{Name: strings.Trim(actor, " "), Order: index})
 	}
 
-	builder.WriteString("</movie>")
+	nfo, err := xml.MarshalIndent(i.Info, "", "  ")
+	if err != nil {
+		log.Println(err)
+	}
 
-	return builder.String()
+	return xmlHeader + string(nfo)
 }
