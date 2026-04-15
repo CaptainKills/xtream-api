@@ -116,7 +116,7 @@ func (m Movie) Export(c *XtreamClient, dir string) (int, int, int, error) {
 	url := c.buildURL(m.StreamType, m.Id, m.Extension)
 
 	// Create Subdirectory
-	err := os.Mkdir(pathDirectory, 0o750)
+	err := os.Mkdir(pathDirectory, 0o755)
 	if err != nil && !os.IsExist(err) {
 		return updated_stream, updated_image, updated_nfo, err
 	}

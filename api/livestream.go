@@ -67,7 +67,7 @@ func (l LiveStream) Export(c *XtreamClient, dir string) (int, int, int, error) {
 	url := c.buildURL(l.StreamType, l.Id, c.account.UserInfo.AllowedOutputFormats[0])
 
 	// Create Subdirectory
-	err := os.Mkdir(pathDirectory, 0o750)
+	err := os.Mkdir(pathDirectory, 0o755)
 	if err != nil && !os.IsExist(err) {
 		return updated_stream, updated_image, updated_nfo, err
 	}

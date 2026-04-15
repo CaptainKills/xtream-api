@@ -129,7 +129,7 @@ func (s Series) Export(c *XtreamClient, dir string) (int, int, int, error) {
 	pathNfo := dir + "/tvshow.nfo"
 
 	// Create Subdirectory
-	err := os.Mkdir(pathDirectory, 0o750)
+	err := os.Mkdir(pathDirectory, 0o755)
 	if err != nil && !os.IsExist(err) {
 		return updated_streams, updated_images, updated_nfos, err
 	}
@@ -145,7 +145,7 @@ func (s Series) Export(c *XtreamClient, dir string) (int, int, int, error) {
 		pathSeason := pathDirectory + "/Season " + season
 
 		// Create Season Subdirectory
-		err := os.Mkdir(pathSeason, 0o750)
+		err := os.Mkdir(pathSeason, 0o755)
 		if err != nil && !os.IsExist(err) {
 			return updated_streams, updated_images, updated_nfos, err
 		}
