@@ -37,10 +37,10 @@ func main() {
 
 	// Launch Time Delay
 	if time.Now().Before(options.LaunchTime) {
-		delay := options.LaunchTime.Format(time.DateTime)
+		launch := options.LaunchTime.Format(time.DateTime)
 		now := time.Now().Format(time.DateTime)
 
-		log.Printf("[INFO] Next run scheduled at: %s (Current time: %s)\n", delay, now)
+		log.Printf("[INFO] Next run scheduled at: %s (Current time: %s)\n", launch, now)
 		time.Sleep(time.Until(options.LaunchTime))
 	}
 
@@ -107,34 +107,34 @@ func main() {
 		}
 
 		// Export LiveStreams
-		err = ExportLiveStreams(client, &livestreams)
+		err = Export(client, &livestreams, directoryLivestreams, "Livestreams")
 		if err != nil {
 			log.Printf("[ERROR] Unable to export LiveStreams: %v\n", err)
 		}
 
-		err = ValidateLiveStreams()
+		err = Validate(directoryLivestreams, "Livestreams")
 		if err != nil {
 			log.Printf("[ERROR] Unable to validate LiveStreams: %v\n", err)
 		}
 
 		// Export Movies
-		err = ExportMovies(client, &movies)
+		err = Export(client, &movies, directoryMovies, "  Movies   ")
 		if err != nil {
 			log.Printf("[ERROR] Unable to export Movies: %v\n", err)
 		}
 
-		err = ValidateMovies()
+		err = Validate(directoryMovies, "  Movies   ")
 		if err != nil {
 			log.Printf("[ERROR] Unable to validate Movies: %v\n", err)
 		}
 
 		// Export Series
-		err = ExportSeries(client, &series)
+		err = Export(client, &series, directorySeries, "  Series   ")
 		if err != nil {
 			log.Printf("[ERROR] Unable to export Series: %v\n", err)
 		}
 
-		err = ValidateSeries()
+		err = Validate(directorySeries, "  Series   ")
 		if err != nil {
 			log.Printf("[ERROR] Unable to validate Series: %v\n", err)
 		}

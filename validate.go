@@ -6,37 +6,39 @@ import (
 	"strings"
 )
 
-func ValidateLiveStreams() error {
+func Validate(dir string, label string) error {
 	total_streams := 0
 	total_covers := 0
+	total_metadata := 0
 
-	log.Printf("[INFO] Validating LiveStreams...")
+	log.Printf("[INFO] Validating '%s'...\n", label)
 
-	root, err := os.ReadDir(directoryLivestreams)
+	root, err := os.ReadDir(dir)
 	if err != nil {
 		return err
 	}
 
-	for _, dir := range root {
-		if !dir.IsDir() {
-			log.Printf("[WARNING] Found File in Root Directory: %s\n", dir.Name())
+	for _, subdir := range root {
+		if !subdir.IsDir() {
+			log.Printf("[WARNING] Found File in Root Directory: %s\n", subdir.Name())
 
-			err := os.Remove(directorySeries + dir.Name())
+			err := os.Remove(dir + subdir.Name())
 			if err != nil {
 				return err
 			}
 			continue
 		}
 
-		subdir, err := os.ReadDir(directoryLivestreams + dir.Name())
+		content, err := os.ReadDir(dir + subdir.Name())
 		if err != nil {
 			return err
 		}
 
 		nr_of_streams := 0
 		nr_of_covers := 0
+		nr_of_metadata := 0
 
-		for _, file := range subdir {
+		for _, file := range content {
 			if strings.HasSuffix(file.Name(), ".strm") {
 				nr_of_streams++
 				total_streams++
@@ -46,130 +48,57 @@ func ValidateLiveStreams() error {
 				nr_of_covers++
 				total_covers++
 			}
+
+			if strings.HasSuffix(file.Name(), ".nfo") {
+				nr_of_metadata++
+				total_metadata++
+			}
+
+			if file.IsDir() {
+				season, err := os.ReadDir(dir + subdir.Name() + "/" + file.Name())
+				if err != nil {
+					return err
+				}
+
+				for _, subfile := range season {
+					if strings.HasSuffix(subfile.Name(), ".strm") {
+						nr_of_streams++
+						total_streams++
+					}
+
+					if strings.HasSuffix(subfile.Name(), ".nfo") {
+						nr_of_metadata++
+						total_metadata++
+					}
+				}
+			}
 		}
 
-		if nr_of_streams == 0 || nr_of_streams > 1 || nr_of_covers > 1 {
-			log.Printf("[WARNING] Unexpected Number of Files: STRM=%d, IMG=%d | %s\n", nr_of_streams, nr_of_covers, dir.Name())
-			err := cleanDirectory(directoryLivestreams+dir.Name(), subdir)
-			if err != nil {
-				return err
+		switch label {
+		case "Livestreams":
+			if nr_of_streams == 0 || nr_of_streams > 1 || nr_of_covers > 1 || nr_of_metadata > 1 {
+				log.Printf("[WARNING] (%s) Unexpected Number of Files: STRM=%2d, IMG=%2d, NFO=%2d | %s\n", label, nr_of_streams, nr_of_covers, nr_of_metadata, subdir.Name())
+				err := cleanDirectory(directoryLivestreams+subdir.Name(), content)
+				if err != nil {
+					return err
+				}
+			}
+		case "  Movies   ":
+			if nr_of_streams == 0 || nr_of_streams > 1 || nr_of_covers > 1 || nr_of_metadata > 1 {
+				log.Printf("[WARNING] (%s) Unexpected Number of Files: STRM=%2d, IMG=%2d, NFO=%2d | %s\n", label, nr_of_streams, nr_of_covers, nr_of_metadata, subdir.Name())
+				err := cleanDirectory(directoryLivestreams+subdir.Name(), content)
+				if err != nil {
+					return err
+				}
+			}
+		case "  Series   ":
+			if nr_of_streams == 0 || nr_of_covers > 1 {
+				log.Printf("[WARNING] (%s) Unexpected Number of Files: STRM=%2d, IMG=%2d, NFO=%2d | %s\n", label, nr_of_streams, nr_of_covers, nr_of_metadata, subdir.Name())
 			}
 		}
 	}
 
-	log.Printf("[INFO] (LiveStreams) Validated %6d Streams, %6d Covers\n", total_streams, total_covers)
-
-	return nil
-}
-
-func ValidateMovies() error {
-	total_streams := 0
-	total_covers := 0
-
-	log.Printf("[INFO] Validating Movies...")
-
-	root, err := os.ReadDir(directoryMovies)
-	if err != nil {
-		return err
-	}
-
-	for _, dir := range root {
-		if !dir.IsDir() {
-			log.Printf("[WARNING] Found File in Root Directory: %s\n", dir.Name())
-
-			err := os.Remove(directorySeries + dir.Name())
-			if err != nil {
-				return err
-			}
-			continue
-		}
-
-		subdir, err := os.ReadDir(directoryMovies + dir.Name())
-		if err != nil {
-			return err
-		}
-
-		nr_of_streams := 0
-		nr_of_covers := 0
-
-		for _, file := range subdir {
-			if strings.HasSuffix(file.Name(), ".strm") {
-				nr_of_streams++
-				total_streams++
-			}
-
-			if strings.HasPrefix(file.Name(), "cover") {
-				nr_of_covers++
-				total_covers++
-			}
-		}
-
-		if nr_of_streams == 0 || nr_of_streams > 1 || nr_of_covers > 1 {
-			log.Printf("[WARNING] Unexpected Number of Files: STRM=%d, IMG=%d | %s\n", nr_of_streams, nr_of_covers, dir.Name())
-			err := cleanDirectory(directoryMovies+dir.Name(), subdir)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	log.Printf("[INFO] (  Movies  ) Validated %6d Streams, %6d Covers\n", total_streams, total_covers)
-
-	return nil
-}
-
-func ValidateSeries() error {
-	total_streams := 0
-	total_covers := 0
-
-	log.Printf("[INFO] Validating Series...")
-
-	root, err := os.ReadDir(directorySeries)
-	if err != nil {
-		return err
-	}
-
-	for _, dir := range root {
-		if !dir.IsDir() {
-			log.Printf("[WARNING] Found File in Root Directory: %s\n", dir.Name())
-
-			err := os.Remove(directorySeries + dir.Name())
-			if err != nil {
-				return err
-			}
-			continue
-		}
-
-		subdir, err := os.ReadDir(directorySeries + dir.Name())
-		if err != nil {
-			return err
-		}
-
-		nr_of_streams := 0
-		nr_of_covers := 0
-
-		for _, file := range subdir {
-			// if strings.HasSuffix(file.Name(), ".strm") {
-			// 	nr_of_streams++
-			// 	total_streams++
-			// }
-
-			if strings.HasPrefix(file.Name(), "cover") {
-				nr_of_covers++
-				total_covers++
-			}
-		}
-
-		if nr_of_covers > 1 {
-			log.Printf("[WARNING] Unexpected Number of Files: STRM=%d, IMG=%d | %s\n", nr_of_streams, nr_of_covers, dir.Name())
-			err := cleanDirectory(directorySeries+dir.Name(), subdir)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	log.Printf("[INFO] (  Series  ) Validated %6d Streams, %6d Covers\n", total_streams, total_covers)
+	log.Printf("[INFO] (%s) Validated %6d Streams, %6d Covers, %6d Metadata\n", label, total_streams, total_covers, total_metadata)
 
 	return nil
 }
@@ -177,6 +106,7 @@ func ValidateSeries() error {
 func cleanDirectory(root string, dir []os.DirEntry) error {
 	streams := []os.DirEntry{}
 	images := []os.DirEntry{}
+	metadata := []os.DirEntry{}
 
 	for _, file := range dir {
 		if strings.HasSuffix(file.Name(), ".strm") {
@@ -185,6 +115,10 @@ func cleanDirectory(root string, dir []os.DirEntry) error {
 
 		if strings.HasPrefix(file.Name(), "cover") {
 			images = append(images, file)
+		}
+
+		if strings.HasSuffix(file.Name(), ".nfo") {
+			metadata = append(metadata, file)
 		}
 	}
 
@@ -252,7 +186,42 @@ func cleanDirectory(root string, dir []os.DirEntry) error {
 		}
 	}
 
-	log.Printf("[DEBUG] Cleaned %d Streams, %d Images\n", deletedStreams, deletedImages)
+	deletedMetadata := 0
+	if len(metadata) > 1 {
+		newestMetadata := metadata[0]
+		newestInfo, err := os.Stat(root + "/" + newestMetadata.Name())
+		if err != nil {
+			return err
+		}
+		newestModtime := newestInfo.ModTime()
+
+		for _, nfo := range metadata {
+			info, err := os.Stat(root + "/" + nfo.Name())
+			if err != nil {
+				return err
+			}
+			modtime := info.ModTime()
+
+			if modtime.After(newestModtime) {
+				err := os.Remove(root + "/" + newestMetadata.Name())
+				if err != nil {
+					return err
+				}
+
+				newestMetadata = nfo
+				newestModtime = modtime
+				deletedMetadata++
+			} else if modtime.Before(newestModtime) {
+				err := os.Remove(root + "/" + nfo.Name())
+				if err != nil {
+					return err
+				}
+				deletedMetadata++
+			}
+		}
+	}
+
+	log.Printf("[DEBUG] Cleaned %d Streams, %d Images, %d Metadata\n", deletedStreams, deletedImages, deletedMetadata)
 
 	return nil
 }
