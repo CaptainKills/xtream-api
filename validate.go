@@ -86,7 +86,7 @@ func Validate(dir string, label string) error {
 		case "  Movies   ":
 			if nr_of_streams == 0 || nr_of_streams > 1 || nr_of_covers > 1 || nr_of_metadata > 1 {
 				log.Printf("[WARNING] (%s) Unexpected Number of Files: STRM=%2d, IMG=%2d, NFO=%2d | %s\n", label, nr_of_streams, nr_of_covers, nr_of_metadata, subdir.Name())
-				err := cleanDirectory(directoryLivestreams+subdir.Name(), content)
+				err := cleanDirectory(directoryMovies+subdir.Name(), content)
 				if err != nil {
 					return err
 				}
