@@ -1,83 +1,42 @@
 package main
 
 import (
-	"errors"
 	"log"
 	"os"
 
 	"github.com/CaptainKills/xtream-api/api"
 )
 
-func ExportLiveStreams(client *api.XtreamClient, livestreams *map[int]api.LiveStream) error {
-	updated_streams := 0
-	updated_images := 0
-
-	if len(*livestreams) == 0 {
-		return errors.New("No available LiveStreams for export!")
-	}
-
-	log.Printf("[INFO] Exporting LiveStreams...")
-
-	// Create Root Directory
-	err := os.MkdirAll(directoryLivestreams, 0o750)
-	if err != nil {
-		return err
-	}
-
-	length := len(*livestreams)
-	i := 0
-	for _, livestream := range *livestreams {
-		// Output Progress Information
-		if i%(length/debugPercent) == 0 || i == length-1 {
-			percentage := float64(i) / float64(length) * 100
-			log.Printf("[DEBUG] (LiveStream) Export Progress: %6d / %6d (%6.2f%%), STRM: %6d, IMG: %6d\n", i+1, length, percentage, updated_streams, updated_images)
-		}
-
-		updated_stream, updated_image, err := livestream.Export(client, directoryLivestreams)
-		if err != nil {
-			log.Printf("[ERROR] Failed to export Livestream (%d): %v\n", livestream.Id, err)
-			continue
-		}
-
-		updated_streams += updated_stream
-		updated_images += updated_image
-		i++
-	}
-
-	log.Printf("[INFO] LiveStreams Processed: %d, Streams Updated: %d, Images Updated: %d\n", length, updated_streams, updated_images)
-
-	return nil
-}
-
-func ExportMovies(client *api.XtreamClient, movies *map[int]api.Movie) error {
+func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, dir string, label string) error {
 	updated_streams := 0
 	updated_images := 0
 	updated_nfos := 0
 
-	if len(*movies) == 0 {
-		return errors.New("No available Movies for export!")
+	if len(*streams) == 0 {
+		log.Printf("[INFO] No available '%s' for export.\n", label)
+		return nil
 	}
 
-	log.Printf("[INFO] Exporting Movies...")
+	log.Printf("[INFO] Exporting '%s'...\n", label)
 
 	// Create Root Directory
-	err := os.MkdirAll(directoryMovies, 0o750)
+	err := os.MkdirAll(dir, 0o750)
 	if err != nil {
 		return err
 	}
 
-	length := len(*movies)
+	length := len(*streams)
 	i := 0
-	for _, movie := range *movies {
+	for id, stream := range *streams {
 		// Output Progress Information
-		if i%(length/debugPercent) == 0 || i == length-1 {
+		if length >= debugPercent && i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
-			log.Printf("[DEBUG] (  Movies  ) Export Progress: %6d / %6d (%6.2f%%), STRM: %6d, IMG: %6d, NFO: %6d\n", i+1, length, percentage, updated_streams, updated_images, updated_nfos)
+			log.Printf("[DEBUG] (%s) Export Progress: %6d / %6d (%6.2f%%)\tSTRM: %6d, IMG: %6d, NFO: %6d\n", label, i+1, length, percentage, updated_streams, updated_images, updated_nfos)
 		}
 
-		updated_stream, updated_image, updated_nfo, err := movie.Export(client, directoryMovies)
+		updated_stream, updated_image, updated_nfo, err := stream.Export(client, dir)
 		if err != nil {
-			log.Printf("[ERROR] Failed to export Movie (%d): %v\n", movie.Id, err)
+			log.Printf("[ERROR] Failed to export '%s' (%d): %v\n", label, id, err)
 			continue
 		}
 
@@ -87,50 +46,7 @@ func ExportMovies(client *api.XtreamClient, movies *map[int]api.Movie) error {
 		i++
 	}
 
-	log.Printf("[INFO] Movies Processed: %d, Streams Updated: %d, Images Updated: %d, Metadata Updated: %d\n", length, updated_streams, updated_images, updated_nfos)
-
-	return nil
-}
-
-func ExportSeries(client *api.XtreamClient, series *map[int]api.Series) error {
-	updated_streams := 0
-	updated_images := 0
-	updated_nfos := 0
-
-	if len(*series) == 0 {
-		return errors.New("No available Series for export!")
-	}
-
-	log.Printf("[INFO] Exporting Series...")
-
-	// Create Root Directory
-	err := os.MkdirAll(directorySeries, 0o750)
-	if err != nil {
-		return err
-	}
-
-	length := len(*series)
-	i := 0
-	for _, show := range *series {
-		// Output Progress Information
-		if i%(length/debugPercent) == 0 || i == length-1 {
-			percentage := float64(i) / float64(length) * 100
-			log.Printf("[DEBUG] (  Series  ) Export Progress: %6d / %6d (%6.2f%%), STRM: %6d, IMG: %6d, NFO: %6d\n", i+1, length, percentage, updated_streams, updated_images, updated_nfos)
-		}
-
-		updated_stream, updated_image, updated_nfo, err := show.Export(client, directorySeries)
-		if err != nil {
-			log.Printf("[ERROR] Failed to export Series (%d): %v\n", show.Id, err)
-			continue
-		}
-
-		updated_streams += updated_stream
-		updated_images += updated_image
-		updated_nfos += updated_nfo
-		i++
-	}
-
-	log.Printf("[INFO] Series Processed: %d, Streams Updated: %d, Images Updated: %d, Metadata Updated: %d\n", length, updated_streams, updated_images, updated_nfos)
+	log.Printf("[INFO] (%s) Streams Processed: %d, Streams Updated: %d, Images Updated: %d, Metadata Updated: %d\n", label, length, updated_streams, updated_images, updated_nfos)
 
 	return nil
 }

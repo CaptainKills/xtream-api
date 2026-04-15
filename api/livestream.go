@@ -54,9 +54,10 @@ func (c *XtreamClient) GetLiveStreams() (map[int]LiveStream, error) {
 	return livestream_map, nil
 }
 
-func (l LiveStream) Export(c *XtreamClient, dir string) (int, int, error) {
+func (l LiveStream) Export(c *XtreamClient, dir string) (int, int, int, error) {
 	updated_stream := 0
 	updated_image := 0
+	updated_nfo := 0
 
 	l.Name = strings.ReplaceAll(l.Name, "/", "_")
 
@@ -68,13 +69,13 @@ func (l LiveStream) Export(c *XtreamClient, dir string) (int, int, error) {
 	// Create Subdirectory
 	err := os.Mkdir(pathDirectory, 0o750)
 	if err != nil && !os.IsExist(err) {
-		return updated_stream, updated_image, err
+		return updated_stream, updated_image, updated_nfo, err
 	}
 
 	// Write Stream to File
 	updated_stream, err = utils.WriteFile(pathStream, url)
 	if err != nil {
-		return updated_stream, updated_image, err
+		return updated_stream, updated_image, updated_nfo, err
 	}
 
 	// Write Image to File
@@ -86,10 +87,10 @@ func (l LiveStream) Export(c *XtreamClient, dir string) (int, int, error) {
 		} else {
 			updated_image, err = utils.WriteImage(pathImage, image)
 			if err != nil {
-				return updated_stream, updated_image, err
+				return updated_stream, updated_image, updated_nfo, err
 			}
 		}
 	}
 
-	return updated_stream, updated_image, nil
+	return updated_stream, updated_image, updated_nfo, nil
 }
