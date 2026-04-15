@@ -1,43 +1,10 @@
 package utils
 
 import (
-	"bufio"
-	"encoding/json"
 	"log"
 	"os"
 	"strings"
 )
-
-func readFile(path string) (string, error) {
-	file, err := os.Open(path)
-	if err != nil && !os.IsNotExist(err) {
-		return "", err
-	}
-	defer file.Close()
-
-	scanner := bufio.NewScanner(file)
-	if err := scanner.Err(); err != nil {
-		return "", err
-	}
-
-	var data string
-	for scanner.Scan() {
-		data = data + scanner.Text()
-	}
-
-	return data, nil
-}
-
-func writeFile(path string, data []byte) error {
-	file, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	file.Write(data)
-	return nil
-}
 
 func GetImageExtension(url string) string {
 	var extension string
@@ -73,33 +40,19 @@ func ImageExists(file string) bool {
 	return true
 }
 
-func WriteJson(file string, obj any) error {
-	data, err := json.Marshal(obj)
-	if err != nil {
-		return err
-	}
-
-	err = writeFile(file, data)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func WriteFile(file string, data string) (int, error) {
 	updated := 0
 
 	// Try to read existing file
-	f, err := readFile(file)
+	f, err := os.ReadFile(file)
 	if err != nil {
 		return updated, err
 	}
 
 	// Check if file already exists & has the correct stream
-	if f != data {
+	if string(f) != data {
 		// In case file does not exist or has the incorrect data, overwrite file
-		err := writeFile(file, []byte(data))
+		err := os.WriteFile(file, []byte(data), 0o644)
 		if err != nil {
 			return updated, err
 		}
@@ -110,7 +63,7 @@ func WriteFile(file string, data string) (int, error) {
 }
 
 func WriteImage(file string, image []byte) (int, error) {
-	err := writeFile(file, image)
+	err := os.WriteFile(file, image, 0o644)
 	if err != nil {
 		return 0, err
 	}
