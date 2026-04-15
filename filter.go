@@ -31,7 +31,7 @@ func FilterCategories(options *api.XtreamOptions, live *map[int]api.Category, mo
 		return err
 	}
 
-	log.Printf("[INFO] Banned %6d out of %6d Series Categories\t(%6d Remaining)\n", banned, total, len(*series))
+	log.Printf("[INFO] Banned %6d out of %6d Series Categories\t\t(%6d Remaining)\n", banned, total, len(*series))
 
 	return nil
 }
