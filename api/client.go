@@ -39,6 +39,10 @@ type XtreamClient struct {
 
 	limiter    *rate.Limiter
 	httpClient http.Client
+
+	requestCount  int
+	totalWaitTime time.Duration
+	startTime     time.Time
 }
 
 type XtreamOptions struct {
@@ -95,10 +99,13 @@ func (c *XtreamClient) buildURL(stream string, id int, ext string) string {
 }
 
 func (c *XtreamClient) sendRequest(query string) ([]byte, error) {
+	waitStart := time.Now()
 	err := c.limiter.Wait(context.Background())
 	if err != nil {
 		return []byte{}, err
 	}
+	c.totalWaitTime += time.Since(waitStart)
+	c.requestCount++
 
 	req, err := http.NewRequest(http.MethodGet, query, nil)
 	if err != nil {
@@ -121,4 +128,21 @@ func (c *XtreamClient) sendRequest(query string) ([]byte, error) {
 	}
 
 	return body, nil
+}
+
+func (c *XtreamClient) ResetRateStats() {
+	c.startTime = time.Now()
+	c.requestCount = 0
+	c.totalWaitTime = time.Duration(0)
+}
+
+func (c *XtreamClient) GetRequestRate() float64 {
+	elapsed := time.Since(c.startTime)
+	if elapsed == 0 || c.requestCount == 0 {
+		return 0.0
+	}
+
+	actualRPM := float64(c.requestCount) / elapsed.Minutes()
+
+	return actualRPM
 }
