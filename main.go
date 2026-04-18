@@ -8,6 +8,9 @@ import (
 )
 
 const (
+	MODE_DIR  = 0o755
+	MODE_FILE = 0o644
+
 	directoryRoot        = "media/"
 	directoryLivestreams = directoryRoot + "live/"
 	directoryMovies      = directoryRoot + "movies/"

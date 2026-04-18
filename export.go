@@ -20,7 +20,7 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, dir stri
 	log.Printf("[INFO] Exporting '%s'...\n", label)
 
 	// Create Root Directory
-	err := os.MkdirAll(dir, dirMode)
+	err := os.MkdirAll(dir, MODE_DIR)
 	if err != nil {
 		return err
 	}
