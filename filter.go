@@ -85,7 +85,11 @@ func FilterStreams[T api.Stream](client *api.XtreamClient, streams *map[int]T, c
 			continue
 		} else {
 			// If stream did not change, check if it needs image or metadata update
-			md := (*metadata)[id]
+			md, ok := (*metadata)[id]
+			if !ok {
+				// Stream does not have metadata, so must be updated
+				continue
+			}
 			needImageUpdate := client.Options.ImagesEnabled && !md.Image
 			needMetadataUpdate := client.Options.MetadataEnabled && !md.Nfo
 
