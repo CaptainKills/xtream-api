@@ -33,7 +33,7 @@ jobs:
         GOARCH: ${{ matrix.goarch }}
       run: |
         BINARY_NAME="xtream-api"
-        BINARY_NAME+="${{ matrix.goos }}-${{ matrix.goarch }}"
+        BINARY_NAME+="-${{ matrix.goos }}-${{ matrix.goarch }}"
 
         if [ "${{ matrix.goos }}" = "windows" ]; then
           BINARY_NAME+=".exe"
