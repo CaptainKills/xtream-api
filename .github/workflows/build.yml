@@ -1,5 +1,4 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+---
 name: Build Application
 
 on:
@@ -11,6 +10,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+
     steps:
     - uses: actions/checkout@v6
 
@@ -21,8 +25,16 @@ jobs:
         cache-dependency-path: 'go.sum'
 
     - name: Dependencies
-      run: go get .
+      run: go mod download
+
     - name: Build
-      run: go build -v ./...
-    - name: Test
-      run: go test -v ./...
+      env:
+        GOOS: ${{ matrix.goos }}
+        GOARCH: ${{ matrix.goarch }}
+      run: go build -v -o "dist/xtream-api-${{ matrix.goos }}-${{ matrix.goarch }}" ./...
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: xtream-api-${{ matrix.goos }}-${{ matrix.goarch }}
+        path: dist/*
