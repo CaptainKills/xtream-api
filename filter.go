@@ -96,7 +96,7 @@ func FilterLiveStreams(client *api.XtreamClient, livestreams *map[int]api.LiveSt
 		}
 	}
 
-	log.Printf("[INFO] Filtered %6d out of %6d Livestreams\t(%6d Remaining)\n", filtered, total, len(*livestreams))
+	log.Printf("[INFO] Filtered Out %6d out of %6d Livestreams\t(%6d Remaining)\n", filtered, total, len(*livestreams))
 
 	return nil
 }
@@ -136,7 +136,7 @@ func FilterMovies(client *api.XtreamClient, movies *map[int]api.Movie, categorie
 		}
 	}
 
-	log.Printf("[INFO] Filtered %6d out of %6d Movies\t\t(%6d Remaining)\n", filtered, total, len(*movies))
+	log.Printf("[INFO] Filtered Out %6d out of %6d Movies\t\t(%6d Remaining)\n", filtered, total, len(*movies))
 
 	return nil
 }
@@ -176,7 +176,7 @@ func FilterSeries(client *api.XtreamClient, series *map[int]api.Series, categori
 		}
 	}
 
-	log.Printf("[INFO] Filtered %6d out of %6d Series\t\t(%6d Remaining)\n", filtered, total, len(*series))
+	log.Printf("[INFO] Filtered Out %6d out of %6d Series\t\t(%6d Remaining)\n", filtered, total, len(*series))
 
 	return nil
 }
