@@ -9,10 +9,15 @@ import (
 )
 
 const (
+	directoryCache = "cache/"
+
 	cacheFileLivestreams = "livestreams.json"
 	cacheFileMovies      = "movies.json"
 	cacheFileSeries      = "series.json"
-	cacheFileMetadata    = "metadata.json"
+
+	metadataFileLivestreams = "livestreams_metadata.json"
+	metadataFileMovies      = "movies_metadata.json"
+	metadataFileSeries      = "series_metadata.json"
 )
 
 func ImportCache[T api.Stream](streams *map[int]T, file string, label string) error {
@@ -71,10 +76,10 @@ func ExportCache[T api.Stream](streams *map[int]T, cache *map[int]T, metadata *m
 	return nil
 }
 
-func ImportMetadata() (map[int]*api.XtreamMetadata, error) {
+func ImportMetadata(file string, label string) (map[int]*api.XtreamMetadata, error) {
 	metadata := map[int]*api.XtreamMetadata{}
 
-	data, err := os.ReadFile(directoryCache + cacheFileMetadata)
+	data, err := os.ReadFile(directoryCache + file)
 	if err != nil && !os.IsNotExist(err) {
 		return map[int]*api.XtreamMetadata{}, err
 	}
@@ -88,12 +93,12 @@ func ImportMetadata() (map[int]*api.XtreamMetadata, error) {
 		return map[int]*api.XtreamMetadata{}, err
 	}
 
-	log.Printf("[INFO] Imported %6d Entries from %s Cache\n", len(metadata), "Metadata")
+	log.Printf("[INFO] Imported %6d Entries from %s Metadata\n", len(metadata), label)
 
 	return metadata, nil
 }
 
-func ExportMetadata(metadata *map[int]*api.XtreamMetadata) error {
+func ExportMetadata(metadata *map[int]*api.XtreamMetadata, file string, label string) error {
 	// Create Root Directory
 	err := os.MkdirAll(directoryCache, MODE_DIR)
 	if err != nil {
@@ -106,12 +111,12 @@ func ExportMetadata(metadata *map[int]*api.XtreamMetadata) error {
 		return err
 	}
 
-	err = os.WriteFile(directoryCache+cacheFileMetadata, data, MODE_FILE)
+	err = os.WriteFile(directoryCache+file, data, MODE_FILE)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[INFO] Exported %6d Entries to %s Cache\n", len(*metadata), "Metadata")
+	log.Printf("[INFO] Exported %6d Entries to %s Metadata\n", len(*metadata), label)
 
 	return nil
 }

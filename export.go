@@ -7,6 +7,15 @@ import (
 	"github.com/CaptainKills/xtream-api/api"
 )
 
+const (
+	directoryRoot        = "media/"
+	directoryLivestreams = directoryRoot + "live/"
+	directoryMovies      = directoryRoot + "movies/"
+	directorySeries      = directoryRoot + "series/"
+
+	debugPercent = 100
+)
+
 func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, metadata *map[int]*api.XtreamMetadata, dir string, label string) error {
 	updated_streams := 0
 	updated_images := 0
@@ -25,13 +34,15 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, metadata
 		return err
 	}
 
+	client.ResetRateStats()
+
 	length := len(*streams)
 	i := 0
 	for id, stream := range *streams {
 		// Output Progress Information
 		if length >= debugPercent && i%(length/debugPercent) == 0 || i == length-1 {
 			percentage := float64(i) / float64(length) * 100
-			log.Printf("[DEBUG] (%s) Export Progress: %6d / %6d (%6.2f%%)\tSTRM: %6d, IMG: %6d, NFO: %6d\n", label, i+1, length, percentage, updated_streams, updated_images, updated_nfos)
+			log.Printf("[DEBUG] (%s) Export Progress: %6d / %6d (%6.2f%%)\tSTRM: %6d, IMG: %6d, NFO: %6d (%7.2f req/min)\n", label, i+1, length, percentage, updated_streams, updated_images, updated_nfos, client.GetRequestRate())
 		}
 
 		updated_stream, updated_image, updated_nfo, err := stream.Export(client, dir)

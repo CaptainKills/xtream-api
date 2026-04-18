@@ -11,15 +11,6 @@ const (
 	MODE_DIR  = 0o755
 	MODE_FILE = 0o644
 
-	directoryRoot        = "media/"
-	directoryLivestreams = directoryRoot + "live/"
-	directoryMovies      = directoryRoot + "movies/"
-	directorySeries      = directoryRoot + "series/"
-
-	directoryCache = "cache/"
-
-	debugPercent = 100
-
 	labelLivestreams = "Livestreams"
 	labelMovies      = "Movies"
 	labelSeries      = "Series"
@@ -111,9 +102,20 @@ func main() {
 			log.Printf("[ERROR] Failed to import Series Cache: %v\n", err)
 		}
 
-		metadata, err := ImportMetadata()
+		// Import Metadata
+		metadataLivestreams, err := ImportMetadata(metadataFileLivestreams, labelLivestreams)
 		if err != nil {
-			log.Printf("[ERROR] Failed to import Metadata Cache: %v\n", err)
+			log.Printf("[ERROR] Failed to import Livestream Metadata: %v\n", err)
+		}
+
+		metadataMovies, err := ImportMetadata(metadataFileMovies, labelMovies)
+		if err != nil {
+			log.Printf("[ERROR] Failed to import Movie Metadata: %v\n", err)
+		}
+
+		metadataSeries, err := ImportMetadata(metadataFileSeries, labelSeries)
+		if err != nil {
+			log.Printf("[ERROR] Failed to import Series Metadata: %v\n", err)
 		}
 
 		// Filter Streams
@@ -122,23 +124,23 @@ func main() {
 			log.Printf("[ERROR] Failted to filter categories: %v\n", err)
 		}
 
-		err = FilterStreams(client, &livestreams, liveCategories, cachedLivestreams, &metadata, labelLivestreams)
+		err = FilterStreams(client, &livestreams, liveCategories, cachedLivestreams, &metadataLivestreams, labelLivestreams)
 		if err != nil {
 			log.Printf("[ERROR] Failed to filter Livestreams: %v\n", err)
 		}
 
-		err = FilterStreams(client, &movies, movieCategories, cachedMovies, &metadata, labelMovies)
+		err = FilterStreams(client, &movies, movieCategories, cachedMovies, &metadataMovies, labelMovies)
 		if err != nil {
 			log.Printf("[ERROR] Failed to filter Movies: %v\n", err)
 		}
 
-		err = FilterStreams(client, &series, seriesCategories, cachedSeries, &metadata, labelSeries)
+		err = FilterStreams(client, &series, seriesCategories, cachedSeries, &metadataSeries, labelSeries)
 		if err != nil {
 			log.Printf("[ERROR] Failed to filter Series: %v\n", err)
 		}
 
 		// Export LiveStreams
-		err = Export(client, &livestreams, &metadata, directoryLivestreams, labelLivestreams)
+		err = Export(client, &livestreams, &metadataLivestreams, directoryLivestreams, labelLivestreams)
 		if err != nil {
 			log.Printf("[ERROR] Unable to export LiveStreams: %v\n", err)
 		}
@@ -148,8 +150,13 @@ func main() {
 			log.Printf("[ERROR] Unable to validate LiveStreams: %v\n", err)
 		}
 
+		err = ExportCache(&livestreams, &cachedLivestreams, &metadataLivestreams, cacheFileLivestreams, labelLivestreams)
+		if err != nil {
+			log.Printf("[ERROR] Failed to export Livestream Cache: %v\n", err)
+		}
+
 		// Export Movies
-		err = Export(client, &movies, &metadata, directoryMovies, labelMovies)
+		err = Export(client, &movies, &metadataMovies, directoryMovies, labelMovies)
 		if err != nil {
 			log.Printf("[ERROR] Unable to export Movies: %v\n", err)
 		}
@@ -159,8 +166,13 @@ func main() {
 			log.Printf("[ERROR] Unable to validate Movies: %v\n", err)
 		}
 
+		err = ExportCache(&movies, &cachedMovies, &metadataMovies, cacheFileMovies, labelMovies)
+		if err != nil {
+			log.Printf("[ERROR] Failed to export Movie Cache: %v\n", err)
+		}
+
 		// Export Series
-		err = Export(client, &series, &metadata, directorySeries, labelSeries)
+		err = Export(client, &series, &metadataSeries, directorySeries, labelSeries)
 		if err != nil {
 			log.Printf("[ERROR] Unable to export Series: %v\n", err)
 		}
@@ -170,30 +182,29 @@ func main() {
 			log.Printf("[ERROR] Unable to validate Series: %v\n", err)
 		}
 
-		// Export Cache
-		err = ExportCache(&livestreams, &cachedLivestreams, &metadata, cacheFileLivestreams, labelLivestreams)
-		if err != nil {
-			log.Printf("[ERROR] Failed to export Livestream Cache: %v\n", err)
-		}
-
-		err = ExportCache(&movies, &cachedMovies, &metadata, cacheFileMovies, labelMovies)
-		if err != nil {
-			log.Printf("[ERROR] Failed to export Movie Cache: %v\n", err)
-		}
-
-		err = ExportCache(&series, &cachedSeries, &metadata, cacheFileSeries, labelSeries)
+		err = ExportCache(&series, &cachedSeries, &metadataSeries, cacheFileSeries, labelSeries)
 		if err != nil {
 			log.Printf("[ERROR] Failed to export Series Cache: %v\n", err)
 		}
 
-		err = ExportMetadata(&metadata)
+		// Export Metadata
+		err = ExportMetadata(&metadataLivestreams, metadataFileLivestreams, labelLivestreams)
 		if err != nil {
-			log.Printf("[ERROR] Failed to export Metadata Cache: %v\n", err)
+			log.Printf("[ERROR] Failed to export Livestream Metadata: %v\n", err)
 		}
 
-		// Wait until next run
-		end := time.Now()
-		diff := end.Sub(start).Round(time.Millisecond)
+		err = ExportMetadata(&metadataMovies, metadataFileMovies, labelMovies)
+		if err != nil {
+			log.Printf("[ERROR] Failed to export Movie Metadata: %v\n", err)
+		}
+
+		err = ExportMetadata(&metadataSeries, metadataFileSeries, labelSeries)
+		if err != nil {
+			log.Printf("[ERROR] Failed to export Series Metadata: %v\n", err)
+		}
+
+		// Wait Until Next Run
+		diff := time.Since(start).Round(time.Millisecond)
 		next := start.Add(24 * time.Hour)
 
 		log.Printf("[INFO] Run Duration: %s. Next run scheduled at: %s\n", diff.String(), next.Format(time.DateTime))
