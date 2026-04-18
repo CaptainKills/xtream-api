@@ -9,46 +9,18 @@ import (
 	"github.com/CaptainKills/xtream-api/api"
 )
 
-func FilterCategories(options *api.XtreamOptions, live *map[int]api.Category, movie *map[int]api.Category, series *map[int]api.Category) error {
-	// Filter Banned Categories: LiveStreams
-	banned, total, err := filterCategory(live, options.BannedLiveStreams)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("[INFO] Banned %6d out of %6d livestream Categories\t(%6d Remaining)\n", banned, total, len(*live))
-
-	// Filter Banned Categories: Movies
-	banned, total, err = filterCategory(movie, options.BannedMovies)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("[INFO] Banned %6d out of %6d Movie Categories\t\t(%6d Remaining)\n", banned, total, len(*movie))
-
-	// Filter Banned Categories: Series
-	banned, total, err = filterCategory(series, options.BannedSeries)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("[INFO] Banned %6d out of %6d Series Categories\t(%6d Remaining)\n", banned, total, len(*series))
-
-	return nil
-}
-
-func filterCategory(data *map[int]api.Category, bannedCategories []string) (int, int, error) {
+func FilterCategories(data *map[int]api.Category, bannedCategories []string, label string) error {
 	total := len(*data)
 	banned := 0
 
 	if len(bannedCategories) == 1 && bannedCategories[0] == "" {
-		return banned, total, nil
+		return nil
 	}
 
 	for _, category := range *data {
 		id, err := strconv.Atoi(category.Id)
 		if err != nil {
-			return 0, 0, err
+			return err
 		}
 
 		for _, filter := range bannedCategories {
@@ -59,7 +31,9 @@ func filterCategory(data *map[int]api.Category, bannedCategories []string) (int,
 		}
 	}
 
-	return banned, total, nil
+	log.Printf("[INFO] Banned %6d out of %6d %s Categories\t(%6d Remaining)\n", banned, total, label, len(*data))
+
+	return nil
 }
 
 func FilterStreams[T api.Stream](client *api.XtreamClient, streams *map[int]T, categories map[int]api.Category, cache map[int]T, metadata *map[int]*api.XtreamMetadata, label string) error {
