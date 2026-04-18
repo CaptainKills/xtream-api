@@ -54,8 +54,13 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, metadata
 			md.Image = true
 		}
 
-		if updated_nfo > 0 {
-			md.Nfo = true
+		switch any(stream).(type) {
+		case api.LiveStream:
+			md.Nfo = true // LiveStream does not have NFO, so set to true to disable update check
+		default:
+			if updated_nfo > 0 {
+				md.Nfo = true
+			}
 		}
 
 		(*metadata)[id] = md
