@@ -31,7 +31,7 @@ jobs:
       env:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
-      run: go build -v -o "dist/xtream-api-${{ matrix.goos }}-${{ matrix.goarch }}" ./...
+      run: go build -v -o "dist/xtream-api-${{ matrix.goos }}-${{ matrix.goarch }}" .
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v7
