@@ -14,7 +14,6 @@ import (
 )
 
 type Series struct {
-	// BackdropPath   []string `json:"backdrop_path"`
 	Cast           string `json:"cast"`
 	CategoryId     string `json:"category_id"` // int
 	CategoryIds    []int  `json:"category_ids"`
