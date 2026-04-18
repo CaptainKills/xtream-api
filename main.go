@@ -197,7 +197,6 @@ func main() {
 		next := start.Add(24 * time.Hour)
 
 		log.Printf("[INFO] Run Duration: %s. Next run scheduled at: %s\n", diff.String(), next.Format(time.DateTime))
-		// time.Sleep(time.Until(next))
-		break
+		time.Sleep(time.Until(next))
 	}
 }
