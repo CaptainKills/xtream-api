@@ -55,6 +55,12 @@ type XtreamOptions struct {
 	BannedSeries      []string
 }
 
+type XtreamMetadata struct {
+	Strm  bool `json:"strm"`
+	Nfo   bool `json:"nfo"`
+	Image bool `json:"image"`
+}
+
 func NewClient(url string, username string, password string, options XtreamOptions) *XtreamClient {
 	return &XtreamClient{
 		url:      url,

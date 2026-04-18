@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -61,122 +62,72 @@ func filterCategory(data *map[int]api.Category, bannedCategories []string) (int,
 	return banned, total, nil
 }
 
-func FilterLiveStreams(client *api.XtreamClient, livestreams *map[int]api.LiveStream, categories map[int]api.Category) error {
-	total := len(*livestreams)
+func FilterStreams[T api.Stream](client *api.XtreamClient, streams *map[int]T, categories map[int]api.Category, cache map[int]T, metadata *map[int]*api.XtreamMetadata, label string) error {
+	total := len(*streams)
 	filtered := 0
 
-	for id, livestream := range *livestreams {
-		// if old_stream, ok := old[id]; ok {
-		// 	if reflect.DeepEqual(livestream, old_stream) {
-		// 		delete(*livestreams, id)
-		// 		filtered++
-		// 		continue
-		// 	}
-		// }
+	for id, stream := range *streams {
+		// If stream belongs to banned category, do not export
+		banned, err := isBanned(stream, categories)
+		if err != nil {
+			return err
+		}
 
-		for _, catId := range livestream.CategoryIds {
-			allowed := false
+		if banned == true {
+			delete(*streams, id)
+			filtered++
+			continue
+		}
 
-			for _, category := range categories {
-				checkId, err := strconv.Atoi(category.Id)
-				if err != nil {
-					return err
-				}
+		// If stream needs to be updated based on fetched data
+		updated := isUpdated(stream, id, cache)
+		if updated == true {
+			continue
+		} else {
+			// If stream did not change, check if it needs image or metadata update
+			md := (*metadata)[id]
+			needImageUpdate := client.Options.ImagesEnabled && !md.Image
+			needMetadataUpdate := client.Options.MetadataEnabled && !md.Nfo
 
-				if catId == checkId {
-					allowed = true
-					break
-				}
-			}
-
-			if !allowed {
-				delete(*livestreams, id)
+			// If stream is not updated, and doesn't need image or nfo, do not export
+			if !needImageUpdate && !needMetadataUpdate {
+				delete(*streams, id)
 				filtered++
+				continue
 			}
 		}
 	}
 
-	log.Printf("[INFO] Filtered Out %6d out of %6d Livestreams\t(%6d Remaining)\n", filtered, total, len(*livestreams))
+	log.Printf("[INFO] Filtered Out %6d out of %6d %s (%6d Remaining)\n", filtered, total, label, len(*streams))
 
 	return nil
 }
 
-func FilterMovies(client *api.XtreamClient, movies *map[int]api.Movie, categories map[int]api.Category) error {
-	total := len(*movies)
-	filtered := 0
-
-	for id, movie := range *movies {
-		// if old_stream, ok := old[id]; ok {
-		// 	if reflect.DeepEqual(movie, old_stream) {
-		// 		delete(*Data, id)
-		// 		filtered++
-		// 		continue
-		// 	}
-		// }
-
-		for _, catId := range movie.CategoryIds {
-			allowed := false
-
-			for _, category := range categories {
-				checkId, err := strconv.Atoi(category.Id)
-				if err != nil {
-					return err
-				}
-
-				if catId == checkId {
-					allowed = true
-					break
-				}
+func isBanned[T api.Stream](stream T, categories map[int]api.Category) (bool, error) {
+	for _, catId := range stream.GetCategoryIds() {
+		for _, category := range categories {
+			checkId, err := strconv.Atoi(category.Id)
+			if err != nil {
+				return false, err
 			}
 
-			if !allowed {
-				delete(*movies, id)
-				filtered++
+			if catId == checkId {
+				return false, nil
 			}
 		}
 	}
 
-	log.Printf("[INFO] Filtered Out %6d out of %6d Movies\t\t(%6d Remaining)\n", filtered, total, len(*movies))
-
-	return nil
+	return true, nil
 }
 
-func FilterSeries(client *api.XtreamClient, series *map[int]api.Series, categories map[int]api.Category) error {
-	total := len(*series)
-	filtered := 0
-
-	for id, show := range *series {
-		// if old_stream, ok := old[id]; ok {
-		// 	if reflect.DeepEqual(show, old_stream) {
-		// 		delete(*series, id)
-		// 		filtered++
-		// 		continue
-		// 	}
-		// }
-
-		for _, catId := range show.CategoryIds {
-			allowed := false
-
-			for _, category := range categories {
-				checkId, err := strconv.Atoi(category.Id)
-				if err != nil {
-					return err
-				}
-
-				if catId == checkId {
-					allowed = true
-					break
-				}
-			}
-
-			if !allowed {
-				delete(*series, id)
-				filtered++
-			}
+func isUpdated[T api.Stream](stream T, id int, cache map[int]T) bool {
+	if old_stream, ok := cache[id]; ok {
+		if reflect.DeepEqual(stream, old_stream) {
+			return false
+		} else {
+			return true
 		}
 	}
 
-	log.Printf("[INFO] Filtered Out %6d out of %6d Series\t\t(%6d Remaining)\n", filtered, total, len(*series))
-
-	return nil
+	return true // Didn't exist in cache, so stream is new
 }

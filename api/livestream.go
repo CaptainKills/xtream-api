@@ -56,7 +56,7 @@ func (c *XtreamClient) GetLiveStreams() (map[int]LiveStream, error) {
 func (l LiveStream) Export(c *XtreamClient, dir string) (int, int, int, error) {
 	updated_stream := 0
 	updated_image := 0
-	updated_nfo := 0
+	updated_nfo := 1 // LiveStream does not have NFO, so set to 1 for cache update
 
 	l.Name = strings.ReplaceAll(l.Name, "/", "_")
 

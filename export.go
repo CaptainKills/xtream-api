@@ -7,7 +7,7 @@ import (
 	"github.com/CaptainKills/xtream-api/api"
 )
 
-func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, dir string, label string) error {
+func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, metadata *map[int]*api.XtreamMetadata, dir string, label string) error {
 	updated_streams := 0
 	updated_images := 0
 	updated_nfos := 0
@@ -40,6 +40,27 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, dir stri
 			continue
 		}
 
+		// Metadata Analysis
+		md, ok := (*metadata)[id]
+		if !ok {
+			md = &api.XtreamMetadata{}
+		}
+
+		if updated_stream > 0 {
+			md.Strm = true
+		}
+
+		if updated_image > 0 {
+			md.Image = true
+		}
+
+		if updated_nfo > 0 {
+			md.Nfo = true
+		}
+
+		(*metadata)[id] = md
+
+		// Update Counters
 		updated_streams += updated_stream
 		updated_images += updated_image
 		updated_nfos += updated_nfo

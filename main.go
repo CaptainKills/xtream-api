@@ -19,6 +19,10 @@ const (
 	directoryCache = "cache/"
 
 	debugPercent = 100
+
+	labelLivestreams = "Livestreams"
+	labelMovies      = "Movies"
+	labelSeries      = "Series"
 )
 
 func main() {
@@ -88,58 +92,103 @@ func main() {
 		}
 		log.Printf("[INFO] Found %6d Series\n", len(series))
 
+		// Import Cache
+		var cachedLivestreams map[int]api.LiveStream
+		err = ImportCache(&cachedLivestreams, cacheFileLivestreams, labelLivestreams)
+		if err != nil {
+			log.Printf("[ERROR] Failed to import Livestream Cache: %v\n", err)
+		}
+
+		var cachedMovies map[int]api.Movie
+		err = ImportCache(&cachedMovies, cacheFileMovies, labelMovies)
+		if err != nil {
+			log.Printf("[ERROR] Failed to import Movie Cache: %v\n", err)
+		}
+
+		var cachedSeries map[int]api.Series
+		err = ImportCache(&cachedSeries, cacheFileSeries, labelSeries)
+		if err != nil {
+			log.Printf("[ERROR] Failed to import Series Cache: %v\n", err)
+		}
+
+		metadata, err := ImportMetadata()
+		if err != nil {
+			log.Printf("[ERROR] Failed to import Metadata Cache: %v\n", err)
+		}
+
 		// Filter Streams
 		err = FilterCategories(&client.Options, &liveCategories, &movieCategories, &seriesCategories)
 		if err != nil {
 			log.Printf("[ERROR] Failted to filter categories: %v\n", err)
 		}
 
-		err = FilterLiveStreams(client, &livestreams, liveCategories)
+		err = FilterStreams(client, &livestreams, liveCategories, cachedLivestreams, &metadata, labelLivestreams)
 		if err != nil {
 			log.Printf("[ERROR] Failed to filter Livestreams: %v\n", err)
 		}
 
-		err = FilterMovies(client, &movies, movieCategories)
+		err = FilterStreams(client, &movies, movieCategories, cachedMovies, &metadata, labelMovies)
 		if err != nil {
 			log.Printf("[ERROR] Failed to filter Movies: %v\n", err)
 		}
 
-		err = FilterSeries(client, &series, seriesCategories)
+		err = FilterStreams(client, &series, seriesCategories, cachedSeries, &metadata, labelSeries)
 		if err != nil {
 			log.Printf("[ERROR] Failed to filter Series: %v\n", err)
 		}
 
 		// Export LiveStreams
-		err = Export(client, &livestreams, directoryLivestreams, "Livestreams")
+		err = Export(client, &livestreams, &metadata, directoryLivestreams, labelLivestreams)
 		if err != nil {
 			log.Printf("[ERROR] Unable to export LiveStreams: %v\n", err)
 		}
 
-		err = Validate(directoryLivestreams, "Livestreams")
+		err = Validate(directoryLivestreams, labelLivestreams)
 		if err != nil {
 			log.Printf("[ERROR] Unable to validate LiveStreams: %v\n", err)
 		}
 
 		// Export Movies
-		err = Export(client, &movies, directoryMovies, "  Movies   ")
+		err = Export(client, &movies, &metadata, directoryMovies, labelMovies)
 		if err != nil {
 			log.Printf("[ERROR] Unable to export Movies: %v\n", err)
 		}
 
-		err = Validate(directoryMovies, "  Movies   ")
+		err = Validate(directoryMovies, labelMovies)
 		if err != nil {
 			log.Printf("[ERROR] Unable to validate Movies: %v\n", err)
 		}
 
 		// Export Series
-		err = Export(client, &series, directorySeries, "  Series   ")
+		err = Export(client, &series, &metadata, directorySeries, labelSeries)
 		if err != nil {
 			log.Printf("[ERROR] Unable to export Series: %v\n", err)
 		}
 
-		err = Validate(directorySeries, "  Series   ")
+		err = Validate(directorySeries, labelSeries)
 		if err != nil {
 			log.Printf("[ERROR] Unable to validate Series: %v\n", err)
+		}
+
+		// Export Cache
+		err = ExportCache(&livestreams, &cachedLivestreams, &metadata, cacheFileLivestreams, labelLivestreams)
+		if err != nil {
+			log.Printf("[ERROR] Failed to export Livestream Cache: %v\n", err)
+		}
+
+		err = ExportCache(&movies, &cachedMovies, &metadata, cacheFileMovies, labelMovies)
+		if err != nil {
+			log.Printf("[ERROR] Failed to export Movie Cache: %v\n", err)
+		}
+
+		err = ExportCache(&series, &cachedSeries, &metadata, cacheFileSeries, labelSeries)
+		if err != nil {
+			log.Printf("[ERROR] Failed to export Series Cache: %v\n", err)
+		}
+
+		err = ExportMetadata(&metadata)
+		if err != nil {
+			log.Printf("[ERROR] Failed to export Metadata Cache: %v\n", err)
 		}
 
 		// Wait until next run
@@ -148,6 +197,7 @@ func main() {
 		next := start.Add(24 * time.Hour)
 
 		log.Printf("[INFO] Run Duration: %s. Next run scheduled at: %s\n", diff.String(), next.Format(time.DateTime))
-		time.Sleep(time.Until(next))
+		// time.Sleep(time.Until(next))
+		break
 	}
 }
