@@ -117,8 +117,8 @@ func (s Series) Export(c *XtreamClient, dir string) (int, int, int, error) {
 	s.Name = strings.ReplaceAll(s.Name, "/", "_")
 
 	pathDirectory := dir + s.Name
-	pathImage := dir + "/cover" + utils.GetImageExtension(s.Cover)
-	pathNfo := dir + "/tvshow.nfo"
+	pathImage := pathDirectory + "/cover" + utils.GetImageExtension(s.Cover)
+	pathNfo := pathDirectory + "/tvshow.nfo"
 
 	// Create Subdirectory
 	err := os.Mkdir(pathDirectory, 0o755)
