@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/CaptainKills/xtream-api/api"
 )
 
-const (
-	directoryCache = "cache/"
+var (
+	directoryCache = "cache"
 
 	cacheFileLivestreams = "livestreams.json"
 	cacheFileMovies      = "movies.json"
@@ -21,7 +22,7 @@ const (
 )
 
 func ImportCache[T api.Stream](streams *map[int]T, file string, label string) error {
-	data, err := os.ReadFile(directoryCache + file)
+	data, err := os.ReadFile(filepath.Join(directoryCache, file))
 	if err != nil && !os.IsNotExist(err) {
 		return err
 	}
@@ -66,7 +67,7 @@ func ExportCache[T api.Stream](streams *map[int]T, cache *map[int]T, metadata *m
 		return err
 	}
 
-	err = os.WriteFile(directoryCache+file, data, MODE_FILE)
+	err = os.WriteFile(filepath.Join(directoryCache, file), data, MODE_FILE)
 	if err != nil {
 		return err
 	}
@@ -79,7 +80,7 @@ func ExportCache[T api.Stream](streams *map[int]T, cache *map[int]T, metadata *m
 func ImportMetadata(file string, label string) (map[int]*api.XtreamMetadata, error) {
 	metadata := map[int]*api.XtreamMetadata{}
 
-	data, err := os.ReadFile(directoryCache + file)
+	data, err := os.ReadFile(filepath.Join(directoryCache, file))
 	if err != nil && !os.IsNotExist(err) {
 		return map[int]*api.XtreamMetadata{}, err
 	}
@@ -111,7 +112,7 @@ func ExportMetadata(metadata *map[int]*api.XtreamMetadata, file string, label st
 		return err
 	}
 
-	err = os.WriteFile(directoryCache+file, data, MODE_FILE)
+	err = os.WriteFile(filepath.Join(directoryCache, file), data, MODE_FILE)
 	if err != nil {
 		return err
 	}
@@ -120,3 +121,4 @@ func ExportMetadata(metadata *map[int]*api.XtreamMetadata, file string, label st
 
 	return nil
 }
+

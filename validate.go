@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -22,14 +23,14 @@ func Validate(dir string, label string) error {
 		if !subdir.IsDir() {
 			log.Printf("[WARNING] (%s) Found File in Root Directory: %s\n", label, subdir.Name())
 
-			err := os.Remove(dir + subdir.Name())
+			err := os.Remove(filepath.Join(dir, subdir.Name()))
 			if err != nil {
 				return err
 			}
 			continue
 		}
 
-		content, err := os.ReadDir(dir + subdir.Name())
+		content, err := os.ReadDir(filepath.Join(dir, subdir.Name()))
 		if err != nil {
 			return err
 		}
@@ -55,7 +56,7 @@ func Validate(dir string, label string) error {
 			}
 
 			if file.IsDir() {
-				season, err := os.ReadDir(dir + subdir.Name() + "/" + file.Name())
+				season, err := os.ReadDir(filepath.Join(dir, subdir.Name(), file.Name()))
 				if err != nil {
 					return err
 				}
@@ -78,7 +79,7 @@ func Validate(dir string, label string) error {
 		case "Livestreams":
 			if nr_of_streams == 0 || nr_of_streams > 1 || nr_of_covers > 1 || nr_of_metadata > 1 {
 				log.Printf("[WARNING] (%s) Unexpected Number of Files: STRM=%2d, IMG=%2d, NFO=%2d | %s\n", label, nr_of_streams, nr_of_covers, nr_of_metadata, subdir.Name())
-				err := cleanDirectory(directoryLivestreams+subdir.Name(), content)
+				err := cleanDirectory(filepath.Join(directoryLivestreams, subdir.Name()), content)
 				if err != nil {
 					return err
 				}
@@ -86,7 +87,7 @@ func Validate(dir string, label string) error {
 		case "  Movies   ":
 			if nr_of_streams == 0 || nr_of_streams > 1 || nr_of_covers > 1 || nr_of_metadata > 1 {
 				log.Printf("[WARNING] (%s) Unexpected Number of Files: STRM=%2d, IMG=%2d, NFO=%2d | %s\n", label, nr_of_streams, nr_of_covers, nr_of_metadata, subdir.Name())
-				err := cleanDirectory(directoryMovies+subdir.Name(), content)
+				err := cleanDirectory(filepath.Join(directoryMovies, subdir.Name()), content)
 				if err != nil {
 					return err
 				}
@@ -125,21 +126,21 @@ func cleanDirectory(root string, dir []os.DirEntry) error {
 	deletedStreams := 0
 	if len(streams) > 1 {
 		newestStream := images[0]
-		newestInfo, err := os.Stat(root + "/" + newestStream.Name())
+		newestInfo, err := os.Stat(filepath.Join(root, newestStream.Name()))
 		if err != nil {
 			return err
 		}
 		newestModtime := newestInfo.ModTime()
 
 		for _, stream := range streams {
-			info, err := os.Stat(root + "/" + stream.Name())
+			info, err := os.Stat(filepath.Join(root, stream.Name()))
 			if err != nil {
 				return err
 			}
 			modtime := info.ModTime()
 
 			if modtime.After(newestModtime) {
-				err := os.Remove(root + "/" + newestStream.Name())
+				err := os.Remove(filepath.Join(root, newestStream.Name()))
 				if err != nil {
 					return err
 				}
@@ -154,21 +155,21 @@ func cleanDirectory(root string, dir []os.DirEntry) error {
 	deletedImages := 0
 	if len(images) > 1 {
 		newestImage := images[0]
-		newestInfo, err := os.Stat(root + "/" + newestImage.Name())
+		newestInfo, err := os.Stat(filepath.Join(root, newestImage.Name()))
 		if err != nil {
 			return err
 		}
 		newestModtime := newestInfo.ModTime()
 
 		for _, image := range images {
-			info, err := os.Stat(root + "/" + image.Name())
+			info, err := os.Stat(filepath.Join(root, image.Name()))
 			if err != nil {
 				return err
 			}
 			modtime := info.ModTime()
 
 			if modtime.After(newestModtime) {
-				err := os.Remove(root + "/" + newestImage.Name())
+				err := os.Remove(filepath.Join(root, newestImage.Name()))
 				if err != nil {
 					return err
 				}
@@ -177,7 +178,7 @@ func cleanDirectory(root string, dir []os.DirEntry) error {
 				newestModtime = modtime
 				deletedImages++
 			} else if modtime.Before(newestModtime) {
-				err := os.Remove(root + "/" + image.Name())
+				err := os.Remove(filepath.Join(root, image.Name()))
 				if err != nil {
 					return err
 				}
@@ -189,21 +190,21 @@ func cleanDirectory(root string, dir []os.DirEntry) error {
 	deletedMetadata := 0
 	if len(metadata) > 1 {
 		newestMetadata := metadata[0]
-		newestInfo, err := os.Stat(root + "/" + newestMetadata.Name())
+		newestInfo, err := os.Stat(filepath.Join(root, newestMetadata.Name()))
 		if err != nil {
 			return err
 		}
 		newestModtime := newestInfo.ModTime()
 
 		for _, nfo := range metadata {
-			info, err := os.Stat(root + "/" + nfo.Name())
+			info, err := os.Stat(filepath.Join(root, nfo.Name()))
 			if err != nil {
 				return err
 			}
 			modtime := info.ModTime()
 
 			if modtime.After(newestModtime) {
-				err := os.Remove(root + "/" + newestMetadata.Name())
+				err := os.Remove(filepath.Join(root, newestMetadata.Name()))
 				if err != nil {
 					return err
 				}
@@ -212,7 +213,7 @@ func cleanDirectory(root string, dir []os.DirEntry) error {
 				newestModtime = modtime
 				deletedMetadata++
 			} else if modtime.Before(newestModtime) {
-				err := os.Remove(root + "/" + nfo.Name())
+				err := os.Remove(filepath.Join(root, nfo.Name()))
 				if err != nil {
 					return err
 				}
@@ -220,6 +221,7 @@ func cleanDirectory(root string, dir []os.DirEntry) error {
 			}
 		}
 	}
+
 
 	log.Printf("[DEBUG] Cleaned %d Streams, %d Images, %d Metadata\n", deletedStreams, deletedImages, deletedMetadata)
 

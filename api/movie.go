@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/CaptainKills/xtream-api/utils"
@@ -104,10 +105,10 @@ func (m Movie) Export(c *XtreamClient, dir string) (int, int, int, error) {
 
 	m.Name = strings.ReplaceAll(m.Name, "/", "_")
 
-	pathDirectory := dir + m.Name
-	pathStream := pathDirectory + "/" + m.Name + ".strm"
-	pathImage := pathDirectory + "/cover" + utils.GetImageExtension(m.Icon)
-	pathNfo := pathDirectory + "/movie.nfo"
+	pathDirectory := filepath.Join(dir, m.Name)
+	pathStream := filepath.Join(pathDirectory, m.Name+".strm")
+	pathImage := filepath.Join(pathDirectory, "cover"+utils.GetImageExtension(m.Icon))
+	pathNfo := filepath.Join(pathDirectory, "movie.nfo")
 	url := c.buildURL(m.StreamType, m.Id, m.Extension)
 
 	// Create Subdirectory

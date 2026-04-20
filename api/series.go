@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -116,9 +117,9 @@ func (s Series) Export(c *XtreamClient, dir string) (int, int, int, error) {
 
 	s.Name = strings.ReplaceAll(s.Name, "/", "_")
 
-	pathDirectory := dir + s.Name
-	pathImage := pathDirectory + "/cover" + utils.GetImageExtension(s.Cover)
-	pathNfo := pathDirectory + "/tvshow.nfo"
+	pathDirectory := filepath.Join(dir, s.Name)
+	pathImage := filepath.Join(pathDirectory, "cover"+utils.GetImageExtension(s.Cover))
+	pathNfo := filepath.Join(pathDirectory, "tvshow.nfo")
 
 	// Create Subdirectory
 	err := os.Mkdir(pathDirectory, 0o755)
@@ -134,7 +135,7 @@ func (s Series) Export(c *XtreamClient, dir string) (int, int, int, error) {
 
 	// Write Episodes to File
 	for season, episodes := range info.Episodes {
-		pathSeason := pathDirectory + "/Season " + season
+		pathSeason := filepath.Join(pathDirectory, "Season "+season)
 
 		// Create Season Subdirectory
 		err := os.Mkdir(pathSeason, 0o755)
@@ -212,8 +213,8 @@ func (e Episode) Export(c *XtreamClient, dir string) (int, int, error) {
 
 	e.Title = strings.ReplaceAll(e.Title, "/", "_")
 
-	pathStream := dir + "/" + e.Title + ".strm"
-	pathNfo := dir + "/" + e.Title + ".nfo"
+	pathStream := filepath.Join(dir, e.Title+".strm")
+	pathNfo := filepath.Join(dir, e.Title+".nfo")
 
 	id, err := strconv.Atoi(e.Id)
 	if err != nil {

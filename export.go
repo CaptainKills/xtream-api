@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/CaptainKills/xtream-api/api"
 )
@@ -11,13 +12,16 @@ const (
 	MODE_DIR  = 0o755
 	MODE_FILE = 0o644
 
-	directoryRoot        = "media/"
-	directoryLivestreams = directoryRoot + "live/"
-	directoryMovies      = directoryRoot + "movies/"
-	directorySeries      = directoryRoot + "series/"
-
 	debugPercent = 100
 )
+
+var (
+	directoryRoot        = "media"
+	directoryLivestreams = filepath.Join(directoryRoot, "live")
+	directoryMovies      = filepath.Join(directoryRoot, "movies")
+	directorySeries      = filepath.Join(directoryRoot, "series")
+)
+
 
 func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, metadata *map[int]*api.XtreamMetadata, dir string, label string) error {
 	updated_streams := 0
