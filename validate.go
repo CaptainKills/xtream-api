@@ -11,7 +11,7 @@ func Validate(dir string, label string) error {
 	total_covers := 0
 	total_metadata := 0
 
-	log.Printf("[INFO] Validating '%s'...\n", label)
+	log.Printf("[INFO] (%s) Validating Streams...\n", label)
 
 	root, err := os.ReadDir(dir)
 	if err != nil {
@@ -20,7 +20,7 @@ func Validate(dir string, label string) error {
 
 	for _, subdir := range root {
 		if !subdir.IsDir() {
-			log.Printf("[WARNING] Found File in Root Directory: %s\n", subdir.Name())
+			log.Printf("[WARNING] (%s) Found File in Root Directory: %s\n", label, subdir.Name())
 
 			err := os.Remove(dir + subdir.Name())
 			if err != nil {

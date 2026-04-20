@@ -31,7 +31,7 @@ func FilterCategories(data *map[int]api.Category, bannedCategories []string, lab
 		}
 	}
 
-	log.Printf("[INFO] Banned %6d out of %6d %s Categories\t(%6d Remaining)\n", banned, total, label, len(*data))
+	log.Printf("[INFO] (%s) Banned %6d out of %6d Categories\t(%6d Remaining)\n", label, banned, total, len(*data))
 
 	return nil
 }
@@ -76,7 +76,7 @@ func FilterStreams[T api.Stream](client *api.XtreamClient, streams *map[int]T, c
 		}
 	}
 
-	log.Printf("[INFO] Filtered Out %6d out of %6d %s (%6d Remaining)\n", filtered, total, label, len(*streams))
+	log.Printf("[INFO] (%s) Filtered Out %6d out of %6d (%6d Remaining)\n", label, filtered, total, len(*streams))
 
 	return nil
 }

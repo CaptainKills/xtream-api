@@ -35,7 +35,7 @@ func ImportCache[T api.Stream](streams *map[int]T, file string, label string) er
 		return err
 	}
 
-	log.Printf("[INFO] Imported %6d Entries from %s Cache\n", len(*streams), label)
+	log.Printf("[INFO] (%s) Imported %6d Entries from Cache\n", label, len(*streams))
 
 	return nil
 }
@@ -71,7 +71,7 @@ func ExportCache[T api.Stream](streams *map[int]T, cache *map[int]T, metadata *m
 		return err
 	}
 
-	log.Printf("[INFO] Exported %6d Entries to %s Cache\n", len(*cache), label)
+	log.Printf("[INFO] (%s) Exported %6d Entries to Cache\n", label, len(*cache))
 
 	return nil
 }
@@ -93,7 +93,7 @@ func ImportMetadata(file string, label string) (map[int]*api.XtreamMetadata, err
 		return map[int]*api.XtreamMetadata{}, err
 	}
 
-	log.Printf("[INFO] Imported %6d Entries from %s Metadata\n", len(metadata), label)
+	log.Printf("[INFO] (%s) Imported %6d Entries from Metadata\n", label, len(metadata))
 
 	return metadata, nil
 }
@@ -116,7 +116,7 @@ func ExportMetadata(metadata *map[int]*api.XtreamMetadata, file string, label st
 		return err
 	}
 
-	log.Printf("[INFO] Exported %6d Entries to %s Metadata\n", len(*metadata), label)
+	log.Printf("[INFO] (%s) Exported %6d Entries to Metadata\n", label, len(*metadata))
 
 	return nil
 }

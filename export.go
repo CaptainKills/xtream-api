@@ -25,11 +25,11 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, metadata
 	updated_nfos := 0
 
 	if len(*streams) == 0 {
-		log.Printf("[INFO] No available '%s' for export.\n", label)
+		log.Printf("[INFO] (%s) No available streams for export\n", label)
 		return nil
 	}
 
-	log.Printf("[INFO] Exporting '%s'...\n", label)
+	log.Printf("[INFO] (%s) Exporting Streams...\n", label)
 
 	// Create Root Directory
 	err := os.MkdirAll(dir, MODE_DIR)
@@ -50,7 +50,7 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, metadata
 
 		updated_stream, updated_image, updated_nfo, err := stream.Export(client, dir)
 		if err != nil {
-			log.Printf("[ERROR] Failed to export '%s' (%d): %v\n", label, id, err)
+			log.Printf("[ERROR] (%s) Failed to export Streams (%d): %v\n", label, id, err)
 			continue
 		}
 
