@@ -125,7 +125,7 @@ func (p Program[T]) Run(client *api.XtreamClient) error {
 
 	// Fetch Banned
 	p.banned = p.moderator(client)
-	log.Printf("[INFO] (%s) Found %d Banned Prefixes\n", p.label, len(p.banned))
+	log.Printf("[INFO] (%s) Found %6d Banned Prefixes\n", p.label, len(p.banned))
 
 	// Import Cache
 	err = ImportCache(&p.cache, p.cacheFile, p.label)

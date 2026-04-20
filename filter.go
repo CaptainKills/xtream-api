@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -64,7 +63,7 @@ func FilterStreams[T api.Stream](client *api.XtreamClient, streams *map[int]T, c
 				// Stream does not have metadata, so must be updated
 				continue
 			}
-			needImageUpdate := client.Options.ImagesEnabled && !md.Image
+			needImageUpdate := client.Options.ImagesEnabled && !md.Image && strings.HasPrefix(stream.GetCover(), "http")
 			needMetadataUpdate := client.Options.MetadataEnabled && !md.Nfo
 
 			// If stream is not updated, and doesn't need image or nfo, do not export
@@ -100,11 +99,7 @@ func isBanned[T api.Stream](stream T, categories map[int]api.Category) (bool, er
 
 func isUpdated[T api.Stream](stream T, id int, cache map[int]T) bool {
 	if old_stream, ok := cache[id]; ok {
-		if reflect.DeepEqual(stream, old_stream) {
-			return false
-		} else {
-			return true
-		}
+		return !stream.Equals(old_stream)
 	}
 
 	return true // Didn't exist in cache, so stream is new

@@ -39,17 +39,17 @@ func main() {
 		// Run Programs
 		err = livestreams.Run(client)
 		if err != nil {
-			log.Printf("[ERROR] Unable to run program %s: %v\n", livestreams.label, err)
+			log.Printf("[ERROR] (%s) Unable to run program: %v\n", livestreams.label, err)
 		}
 
 		err = movies.Run(client)
 		if err != nil {
-			log.Printf("[ERROR] Unable to run program %s: %v\n", movies.label, err)
+			log.Printf("[ERROR] (%s) Unable to run program: %v\n", movies.label, err)
 		}
 
 		err = series.Run(client)
 		if err != nil {
-			log.Printf("[ERROR] Unable to run program %s: %v\n", series.label, err)
+			log.Printf("[ERROR] (%s) Unable to run program: %v\n", series.label, err)
 		}
 
 		// Wait Until Next Run
