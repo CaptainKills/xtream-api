@@ -102,69 +102,84 @@ var series = Program[api.Series]{
 func (p Program[T]) Run(client *api.XtreamClient) error {
 	var err error
 
+	// Reset Program
+	p.streams = map[int]T{}
+	p.categories = map[int]api.Category{}
+	p.banned = []string{}
+	p.cache = map[int]T{}
+	p.metadata = map[int]*api.XtreamMetadata{}
+
 	// Fetch Streams
 	p.streams, err = p.loader(client)
 	if err != nil {
-		log.Printf("[ERROR] Failed to retrieve %s: %v\n", p.label, err)
+		log.Printf("[ERROR] (%s) Failed to retrieve Streams: %v\n", p.label, err)
 	}
-	log.Printf("[INFO] Found %6d %s\n", len(p.streams), p.label)
+	log.Printf("[INFO] (%s) Found %6d Streams\n", p.label, len(p.streams))
 
 	// Fetch Categories
 	p.categories, err = p.categoriser(client)
 	if err != nil {
-		log.Printf("[ERROR] Failed to retrieve %s Categories: %v\n", p.label, err)
+		log.Printf("[ERROR] (%s) Failed to retrieve Categories: %v\n", p.label, err)
 	}
-	log.Printf("[INFO] Found %6d Categories for %s\n", len(p.categories), p.label)
+	log.Printf("[INFO] (%s) Found %6d Categories\n", p.label, len(p.categories))
 
 	// Fetch Banned
 	p.banned = p.moderator(client)
+	log.Printf("[INFO] (%s) Found %d Banned Prefixes\n", p.label, len(p.banned))
 
 	// Import Cache
 	err = ImportCache(&p.cache, p.cacheFile, p.label)
 	if err != nil {
-		log.Printf("[ERROR] Failed to import %s Cache: %v\n", p.label, err)
+		log.Printf("[ERROR] (%s) Failed to import Cache: %v\n", p.label, err)
 	}
 
 	// Import Metadata
 	p.metadata, err = ImportMetadata(p.metadataFile, p.label)
 	if err != nil {
-		log.Printf("[ERROR] Failed to import %s Metadata: %v\n", p.label, err)
+		log.Printf("[ERROR] (%s) Failed to import Metadata: %v\n", p.label, err)
 	}
 
 	// Filter Streams
 	err = FilterCategories(&p.categories, p.banned, p.label)
 	if err != nil {
-		log.Printf("[ERROR] Failted to filter categories: %v\n", err)
+		log.Printf("[ERROR] (%s) Failed to filter Categories: %v\n", p.label, err)
 	}
 
 	err = FilterStreams(client, &p.streams, p.categories, p.cache, &p.metadata, p.label)
 	if err != nil {
-		log.Printf("[ERROR] Failed to filter %s: %v\n", p.label, err)
+		log.Printf("[ERROR] (%s) Failed to filter Streams: %v\n", p.label, err)
 	}
 
 	// Export Streams
 	err = Export(client, &p.streams, &p.metadata, p.directory, p.label)
 	if err != nil {
-		log.Printf("[ERROR] Unable to export %s: %v\n", p.label, err)
+		log.Printf("[ERROR] (%s) Unable to export Streams: %v\n", p.label, err)
 	}
 
 	// Validate Streams
 	err = Validate(p.directory, p.label)
 	if err != nil {
-		log.Printf("[ERROR] Unable to validate %s: %v\n", p.label, err)
+		log.Printf("[ERROR] (%s) Unable to validate Streams: %v\n", p.label, err)
 	}
 
 	// Export Cache
 	err = ExportCache(&p.streams, &p.cache, &p.metadata, p.cacheFile, p.label)
 	if err != nil {
-		log.Printf("[ERROR] Failed to export %s Cache: %v\n", p.label, err)
+		log.Printf("[ERROR] (%s) Failed to export Cache: %v\n", p.label, err)
 	}
 
 	// Export Metadata
 	err = ExportMetadata(&p.metadata, p.metadataFile, p.label)
 	if err != nil {
-		log.Printf("[ERROR] Failed to export %s Metadata: %v\n", p.label, err)
+		log.Printf("[ERROR] (%s) Failed to export Metadata: %v\n", p.label, err)
 	}
+
+	// Clear Program
+	p.streams = map[int]T{}
+	p.categories = map[int]api.Category{}
+	p.banned = []string{}
+	p.cache = map[int]T{}
+	p.metadata = map[int]*api.XtreamMetadata{}
 
 	return nil
 }
