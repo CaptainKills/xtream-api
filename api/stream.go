@@ -32,10 +32,6 @@ func (l LiveStream) Equals(t Stream) bool {
 		return false
 	}
 
-	if l.Number != livestream.Number {
-		return false
-	}
-
 	if l.CategoryId != livestream.CategoryId {
 		return false
 	}
@@ -78,10 +74,6 @@ func (m Movie) Equals(t Stream) bool {
 		return false
 	}
 
-	if m.Number != movie.Number {
-		return false
-	}
-
 	if m.CategoryId != movie.CategoryId {
 		return false
 	}
@@ -100,6 +92,18 @@ func (s Series) Equals(t Stream) bool {
 	show := t.(Series)
 
 	// Compare
+	if s.Id != show.Id {
+		return false
+	}
+
+	if s.Name != show.Name {
+		return false
+	}
+
+	if s.CategoryId != show.CategoryId {
+		return false
+	}
+
 	if s.LastModified != show.LastModified {
 		return false
 	}
