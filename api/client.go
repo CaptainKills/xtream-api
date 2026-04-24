@@ -53,12 +53,6 @@ type XtreamOptions struct {
 	RequestTimeout   time.Duration
 }
 
-type XtreamMetadata struct {
-	Strm  bool `json:"strm"`
-	Nfo   bool `json:"nfo"`
-	Image bool `json:"image"`
-}
-
 func NewClient(url string, username string, password string, options XtreamOptions) *XtreamClient {
 	var limiter *rate.Limiter
 	if options.RequestPerMinute != 0 {

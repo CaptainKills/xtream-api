@@ -41,7 +41,7 @@ func ImportCache[T api.Stream](streams *map[int]T, file string, label string) er
 	return nil
 }
 
-func ExportCache[T api.Stream](streams *map[int]T, cache *map[int]T, metadata *map[int]*api.XtreamMetadata, file string, label string) error {
+func ExportCache[T api.Stream](streams *map[int]T, cache *map[int]T, state *map[int]*State, file string, label string) error {
 	// Create Root Directory
 	err := os.MkdirAll(directoryCache, MODE_DIR)
 	if err != nil {
@@ -50,13 +50,13 @@ func ExportCache[T api.Stream](streams *map[int]T, cache *map[int]T, metadata *m
 
 	// Copy Streams to Cache
 	for id, stream := range *streams {
-		md, ok := (*metadata)[id]
+		s, ok := (*state)[id]
 		if !ok {
-			// No metadata, so doesn't need to be exported to cache
+			// No state, so doesn't need to be exported to cache
 			continue
 		}
 
-		if md.Strm == true || md.Image == true || md.Nfo == true {
+		if s.Strm == true || s.Image == true || s.Nfo == true {
 			(*cache)[id] = stream
 		}
 	}
@@ -77,29 +77,29 @@ func ExportCache[T api.Stream](streams *map[int]T, cache *map[int]T, metadata *m
 	return nil
 }
 
-func ImportMetadata(file string, label string) (map[int]*api.XtreamMetadata, error) {
-	metadata := map[int]*api.XtreamMetadata{}
+func LoadState(file string, label string) (map[int]*State, error) {
+	state := map[int]*State{}
 
 	data, err := os.ReadFile(filepath.Join(directoryCache, file))
 	if err != nil && !os.IsNotExist(err) {
-		return map[int]*api.XtreamMetadata{}, err
+		return map[int]*State{}, err
 	}
 
 	if data == nil {
 		data = []byte("{}") // Create Empty JSON Object if file doesn't exist.
 	}
 
-	err = json.Unmarshal(data, &metadata)
+	err = json.Unmarshal(data, &state)
 	if err != nil {
-		return map[int]*api.XtreamMetadata{}, err
+		return map[int]*State{}, err
 	}
 
-	log.Printf("[INFO] (%s) Imported %6d Entries from Metadata\n", label, len(metadata))
+	log.Printf("[INFO] (%s) Loaded State of %6d Entries\n", label, len(state))
 
-	return metadata, nil
+	return state, nil
 }
 
-func ExportMetadata(metadata *map[int]*api.XtreamMetadata, file string, label string) error {
+func SaveState(state *map[int]*State, file string, label string) error {
 	// Create Root Directory
 	err := os.MkdirAll(directoryCache, MODE_DIR)
 	if err != nil {
@@ -107,7 +107,7 @@ func ExportMetadata(metadata *map[int]*api.XtreamMetadata, file string, label st
 	}
 
 	// Export Metadata
-	data, err := json.MarshalIndent(metadata, "", "  ")
+	data, err := json.MarshalIndent(state, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -117,8 +117,7 @@ func ExportMetadata(metadata *map[int]*api.XtreamMetadata, file string, label st
 		return err
 	}
 
-	log.Printf("[INFO] (%s) Exported %6d Entries to Metadata\n", label, len(*metadata))
+	log.Printf("[INFO] (%s) Saved State of %6d Entries\n", label, len(*state))
 
 	return nil
 }
-

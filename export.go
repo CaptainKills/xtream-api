@@ -22,8 +22,7 @@ var (
 	directorySeries      = filepath.Join(directoryRoot, "series")
 )
 
-
-func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, metadata *map[int]*api.XtreamMetadata, dir string, label string) error {
+func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, state *map[int]*State, dir string, label string) error {
 	updated_streams := 0
 	updated_images := 0
 	updated_nfos := 0
@@ -59,29 +58,29 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, metadata
 		}
 
 		// Metadata Analysis
-		md, ok := (*metadata)[id]
+		s, ok := (*state)[id]
 		if !ok {
-			md = &api.XtreamMetadata{}
+			s = &State{}
 		}
 
 		if updated_stream > 0 {
-			md.Strm = true
+			s.Strm = true
 		}
 
 		if updated_image > 0 {
-			md.Image = true
+			s.Image = true
 		}
 
 		switch any(stream).(type) {
 		case api.LiveStream:
-			md.Nfo = true // LiveStream does not have NFO, so set to true to disable update check
+			s.Nfo = true // LiveStream does not have NFO, so set to true to disable update check
 		default:
 			if updated_nfo > 0 {
-				md.Nfo = true
+				s.Nfo = true
 			}
 		}
 
-		(*metadata)[id] = md
+		(*state)[id] = s
 
 		// Update Counters
 		updated_streams += updated_stream
