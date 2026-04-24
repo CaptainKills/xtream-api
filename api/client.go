@@ -66,14 +66,29 @@ type XtreamMetadata struct {
 }
 
 func NewClient(url string, username string, password string, options XtreamOptions) *XtreamClient {
+	var limiter *rate.Limiter
+	if options.RequestPerMinute != 0 {
+		every := rate.Every(60 * time.Second / options.RequestPerMinute)
+		limiter = rate.NewLimiter(every, 1)
+	} else {
+		limiter = rate.NewLimiter(rate.Inf, 1)
+	}
+
+	var httpClient http.Client
+	if options.RequestTimeout != 0 {
+		httpClient = http.Client{Timeout: options.RequestTimeout * time.Second}
+	} else {
+		httpClient = *http.DefaultClient
+	}
+
 	return &XtreamClient{
 		url:      url,
 		username: username,
 		password: password,
 		Options:  options,
 
-		limiter:    rate.NewLimiter(rate.Every(60*time.Second/options.RequestPerMinute), 1),
-		httpClient: http.Client{Timeout: options.RequestTimeout * time.Second},
+		limiter:    limiter,
+		httpClient: httpClient,
 	}
 }
 

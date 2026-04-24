@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/CaptainKills/xtream-api/utils"
@@ -60,9 +61,9 @@ func (l LiveStream) Export(c *XtreamClient, dir string) (int, int, int, error) {
 
 	l.Name = strings.ReplaceAll(l.Name, "/", "_")
 
-	pathDirectory := dir + l.Name
-	pathStream := pathDirectory + "/" + l.Name + ".strm"
-	pathImage := pathDirectory + "/cover" + utils.GetImageExtension(l.Icon)
+	pathDirectory := filepath.Join(dir, l.Name)
+	pathStream := filepath.Join(pathDirectory, l.Name+".strm")
+	pathImage := filepath.Join(pathDirectory, "cover"+utils.GetImageExtension(l.Icon))
 	url := c.buildURL(l.StreamType, l.Id, c.account.UserInfo.AllowedOutputFormats[0])
 
 	// Create Subdirectory

@@ -50,6 +50,7 @@ services:
       # - XTREAM_BANNED_MOVIES=""         # ',' Seperated list of banned movie categories
       # - XTREAM_BANNED_SERIES=""         # ',' Seperated list of banned series categories
     volumes:
+      - /etc/localtime:/etc/localtime:ro
       - ./media:/media                    # Change to your desired media directory on Host
       - ./cache:/cache                    # Change to your desired cache directory on Host
     restart: unless-stopped

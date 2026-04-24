@@ -58,7 +58,7 @@ func GetEnvironmentOptions() api.XtreamOptions {
 	if launch != "" {
 		t, err := time.Parse(time.TimeOnly, launch)
 		if err != nil {
-			log.Printf("[WARNING] '%s' Environment Variable Invalid!\n", ENV_LAUNCH)
+			log.Printf("[WARNING] '%s' Environment Variable Invalid! %v\n", ENV_LAUNCH, err)
 			options.LaunchTime = time.Date(0, 0, 1, 0, 0, 0, 0, time.Now().Location())
 		} else {
 			now := time.Now()
