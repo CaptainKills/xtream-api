@@ -46,17 +46,11 @@ type XtreamClient struct {
 }
 
 type XtreamOptions struct {
-	LaunchTime time.Time
-
 	ImagesEnabled   bool
 	MetadataEnabled bool
 
 	RequestPerMinute time.Duration
 	RequestTimeout   time.Duration
-
-	BannedLiveStreams []string
-	BannedMovies      []string
-	BannedSeries      []string
 }
 
 type XtreamMetadata struct {

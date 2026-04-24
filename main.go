@@ -10,7 +10,8 @@ import (
 func main() {
 	// Environment Variables
 	url, username, password := GetEnvironmentCredentials()
-	options := GetEnvironmentOptions()
+	config := GetApplicationConfig()
+	options := GetXtreamOptions()
 
 	if url == "" || username == "" || password == "" {
 		log.Fatalln("[ERROR] Missing Environment Variables! Exiting Program...")
@@ -25,29 +26,29 @@ func main() {
 	log.Printf("[INFO] Authentication Successful: %s\n", url)
 
 	// Launch Time Delay
-	if time.Now().Before(options.LaunchTime) {
-		launch := options.LaunchTime.Format(time.DateTime)
+	if time.Now().Before(config.LaunchTime) {
+		launch := config.LaunchTime.Format(time.DateTime)
 		now := time.Now().Format(time.DateTime)
 
 		log.Printf("[INFO] Next run scheduled at: %s (Current time: %s)\n", launch, now)
-		time.Sleep(time.Until(options.LaunchTime))
+		time.Sleep(time.Until(config.LaunchTime))
 	}
 
 	for {
 		start := time.Now()
 
 		// Run Programs
-		err = livestreams.Run(client)
+		err = livestreams.Run(client, config)
 		if err != nil {
 			log.Printf("[ERROR] (%s) Unable to run program: %v\n", livestreams.label, err)
 		}
 
-		err = movies.Run(client)
+		err = movies.Run(client, config)
 		if err != nil {
 			log.Printf("[ERROR] (%s) Unable to run program: %v\n", movies.label, err)
 		}
 
-		err = series.Run(client)
+		err = series.Run(client, config)
 		if err != nil {
 			log.Printf("[ERROR] (%s) Unable to run program: %v\n", series.label, err)
 		}

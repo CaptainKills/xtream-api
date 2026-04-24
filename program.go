@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/CaptainKills/xtream-api/api"
 )
@@ -9,7 +10,7 @@ import (
 type Program[T api.Stream] struct {
 	loader      func(*api.XtreamClient) (map[int]T, error)
 	categoriser func(*api.XtreamClient) (map[int]api.Category, error)
-	moderator   func(*api.XtreamClient) []string
+	moderator   func(Config) []string
 
 	streams    map[int]T
 	categories map[int]api.Category
@@ -24,6 +25,14 @@ type Program[T api.Stream] struct {
 	label     string
 }
 
+type Config struct {
+	LaunchTime time.Time
+
+	BannedLiveStreams []string
+	BannedMovies      []string
+	BannedSeries      []string
+}
+
 var livestreams = Program[api.LiveStream]{
 	loader: func(c *api.XtreamClient) (map[int]api.LiveStream, error) {
 		return c.GetLiveStreams()
@@ -31,8 +40,8 @@ var livestreams = Program[api.LiveStream]{
 	categoriser: func(c *api.XtreamClient) (map[int]api.Category, error) {
 		return c.GetLiveStreamCategories()
 	},
-	moderator: func(c *api.XtreamClient) []string {
-		return c.Options.BannedLiveStreams
+	moderator: func(c Config) []string {
+		return c.BannedLiveStreams
 	},
 
 	streams:    map[int]api.LiveStream{},
@@ -56,8 +65,8 @@ var movies = Program[api.Movie]{
 	categoriser: func(c *api.XtreamClient) (map[int]api.Category, error) {
 		return c.GetMovieCategories()
 	},
-	moderator: func(c *api.XtreamClient) []string {
-		return c.Options.BannedMovies
+	moderator: func(c Config) []string {
+		return c.BannedMovies
 	},
 
 	streams:    map[int]api.Movie{},
@@ -81,8 +90,8 @@ var series = Program[api.Series]{
 	categoriser: func(c *api.XtreamClient) (map[int]api.Category, error) {
 		return c.GetSeriesCategories()
 	},
-	moderator: func(c *api.XtreamClient) []string {
-		return c.Options.BannedSeries
+	moderator: func(c Config) []string {
+		return c.BannedSeries
 	},
 
 	streams:    map[int]api.Series{},
@@ -99,7 +108,7 @@ var series = Program[api.Series]{
 	label:     "Series",
 }
 
-func (p Program[T]) Run(client *api.XtreamClient) error {
+func (p Program[T]) Run(client *api.XtreamClient, config Config) error {
 	var err error
 
 	// Reset Program
@@ -124,7 +133,7 @@ func (p Program[T]) Run(client *api.XtreamClient) error {
 	log.Printf("[INFO] (%s) Found %6d Categories\n", p.label, len(p.categories))
 
 	// Fetch Banned
-	p.banned = p.moderator(client)
+	p.banned = p.moderator(config)
 	log.Printf("[INFO] (%s) Found %6d Banned Prefixes\n", p.label, len(p.banned))
 
 	// Import Cache
