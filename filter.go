@@ -36,6 +36,13 @@ func FilterCategories(data *map[int]api.Category, bannedCategories []string, lab
 }
 
 func FilterStreams[T api.Stream](client *api.XtreamClient, streams *map[int]T, categories map[int]api.Category, cache map[int]T, metadata *map[int]*api.XtreamMetadata, label string) error {
+	count_banned := 0
+	count_updated := 0
+	count_missing := 0
+	count_image := 0
+	count_nfo := 0
+	count_none := 0
+
 	total := len(*streams)
 	filtered := 0
 
@@ -49,33 +56,45 @@ func FilterStreams[T api.Stream](client *api.XtreamClient, streams *map[int]T, c
 		if banned == true {
 			delete(*streams, id)
 			filtered++
+			count_banned++
 			continue
 		}
 
 		// If stream needs to be updated based on fetched data
 		updated := isUpdated(stream, id, cache)
 		if updated == true {
+			count_updated++
 			continue
 		} else {
 			// If stream did not change, check if it needs image or metadata update
 			md, ok := (*metadata)[id]
 			if !ok {
 				// Stream does not have metadata, so must be updated
+				count_missing++
 				continue
 			}
 			needImageUpdate := client.Options.ImagesEnabled && !md.Image && strings.HasPrefix(stream.GetCover(), "http")
 			needMetadataUpdate := client.Options.MetadataEnabled && !md.Nfo
 
 			// If stream is not updated, and doesn't need image or nfo, do not export
+			if needImageUpdate {
+				count_image++
+			}
+
+			if needMetadataUpdate {
+				count_nfo++
+			}
 			if !needImageUpdate && !needMetadataUpdate {
 				delete(*streams, id)
 				filtered++
+				count_none++
 				continue
 			}
 		}
 	}
 
 	log.Printf("[INFO] (%s) Filtered Out %6d out of %6d (%6d Remaining)\n", label, filtered, total, len(*streams))
+	log.Printf("[DEBUG] (%s) BAN=%6d, UPD=%6d, MIS=%6d, IMG=%6d, NFO=%6d, NONE=%6d\n", label, count_banned, count_updated, count_missing, count_image, count_nfo, count_none)
 
 	return nil
 }
