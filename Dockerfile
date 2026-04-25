@@ -5,12 +5,12 @@ RUN git clone --depth=1 https://github.com/CaptainKills/xtream-api.git /applicat
 WORKDIR /application
 
 RUN go mod download
-RUN go build -v -o /xtream-api
+RUN CGO_ENABLED=0 go build -v -o /xtream-api
 
 # Executable Image
-FROM debian:stable-slim
+FROM alpine:latest
 
-RUN apt-get update && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache ca-certificates
 
 COPY --from=builder --chmod=+x /xtream-api /xtream-api
 
