@@ -2,12 +2,45 @@ package main
 
 import (
 	"log"
+	"runtime"
+	"runtime/debug"
 	"time"
 
 	"github.com/CaptainKills/xtream-api/api"
 )
 
+var (
+	Version  = "v2.0.1"
+	Commit   = "unknown"
+	Branch   = "unknown"
+	Date     = "unknown"
+	Modified = "false"
+)
+
+func init() {
+	if info, ok := debug.ReadBuildInfo(); ok {
+		for _, setting := range info.Settings {
+			switch setting.Key {
+			case "vcs.revision":
+				Commit = setting.Value
+			case "vcs.time":
+				Date = setting.Value
+			case "vcs.modified":
+				Modified = setting.Value
+			}
+		}
+	}
+}
+
 func main() {
+	log.Printf("Starting xtream-api %s", Version)
+	log.Printf("  Branch:     %s", Branch)
+	log.Printf("  Commit:     %s", Commit)
+	log.Printf("  Build Time: %s", Date)
+	log.Printf("  Modified:   %s", Modified)
+	log.Printf("  Go Version: %s", runtime.Version())
+	log.Printf("  OS/Arch:    %s/%s", runtime.GOOS, runtime.GOARCH)
+
 	// Environment Variables
 	url, username, password := GetEnvironmentCredentials()
 	config := GetApplicationConfig()
