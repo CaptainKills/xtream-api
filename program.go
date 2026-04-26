@@ -12,17 +12,11 @@ type Program[T api.Stream] struct {
 	categoriser func(*api.XtreamClient) (map[int]api.Category, error)
 	moderator   func(Config) []string
 
-	streams    map[int]T
-	categories map[int]api.Category
-	banned     []string
-
-	cache     map[int]T
 	cacheFile string
-	state     map[int]*State
 	stateFile string
-
 	directory string
-	label     string
+
+	label string
 }
 
 type Config struct {
@@ -50,18 +44,11 @@ var livestreams = Program[api.LiveStream]{
 		return c.BannedLiveStreams
 	},
 
-	streams:    map[int]api.LiveStream{},
-	categories: map[int]api.Category{},
-	banned:     []string{},
-
-	cache:     map[int]api.LiveStream{},
 	cacheFile: cacheFileLivestreams,
-
-	state:     map[int]*State{},
 	stateFile: metadataFileLivestreams,
-
 	directory: directoryLivestreams,
-	label:     "Livestreams",
+
+	label: "Livestreams",
 }
 
 var movies = Program[api.Movie]{
@@ -75,18 +62,11 @@ var movies = Program[api.Movie]{
 		return c.BannedMovies
 	},
 
-	streams:    map[int]api.Movie{},
-	categories: map[int]api.Category{},
-	banned:     []string{},
-
-	cache:     map[int]api.Movie{},
 	cacheFile: cacheFileMovies,
-
-	state:     map[int]*State{},
 	stateFile: metadataFileMovies,
-
 	directory: directoryMovies,
-	label:     "Movies",
+
+	label: "Movies",
 }
 
 var series = Program[api.Series]{
@@ -100,73 +80,66 @@ var series = Program[api.Series]{
 		return c.BannedSeries
 	},
 
-	streams:    map[int]api.Series{},
-	categories: map[int]api.Category{},
-	banned:     []string{},
-
-	cache:     map[int]api.Series{},
 	cacheFile: cacheFileSeries,
-
-	state:     map[int]*State{},
 	stateFile: metadataFileSeries,
-
 	directory: directorySeries,
-	label:     "Series",
+
+	label: "Series",
 }
 
-func (p Program[T]) Run(client *api.XtreamClient, config Config) error {
+func (p *Program[T]) Run(client *api.XtreamClient, config Config) error {
 	var err error
 
-	// Reset Program
-	p.streams = map[int]T{}
-	p.categories = map[int]api.Category{}
-	p.banned = []string{}
-	p.cache = map[int]T{}
-	p.state = map[int]*State{}
+	// Initialise Program
+	streams := map[int]T{}
+	categories := map[int]api.Category{}
+	banned := []string{}
+	cache := map[int]T{}
+	state := map[int]*State{}
 
 	// Fetch Streams
-	p.streams, err = p.loader(client)
+	streams, err = p.loader(client)
 	if err != nil {
 		log.Printf("[ERROR] (%s) Failed to retrieve Streams: %v\n", p.label, err)
 	}
-	log.Printf("[INFO] (%s) Found %6d Streams\n", p.label, len(p.streams))
+	log.Printf("[INFO] (%s) Found %6d Streams\n", p.label, len(streams))
 
 	// Fetch Categories
-	p.categories, err = p.categoriser(client)
+	categories, err = p.categoriser(client)
 	if err != nil {
 		log.Printf("[ERROR] (%s) Failed to retrieve Categories: %v\n", p.label, err)
 	}
-	log.Printf("[INFO] (%s) Found %6d Categories\n", p.label, len(p.categories))
+	log.Printf("[INFO] (%s) Found %6d Categories\n", p.label, len(categories))
 
 	// Fetch Banned
-	p.banned = p.moderator(config)
-	log.Printf("[INFO] (%s) Found %6d Banned Prefixes\n", p.label, len(p.banned))
+	banned = p.moderator(config)
+	log.Printf("[INFO] (%s) Found %6d Banned Prefixes\n", p.label, len(banned))
 
 	// Import Cache
-	err = ImportCache(&p.cache, p.cacheFile, p.label)
+	err = ImportCache(&cache, p.cacheFile, p.label)
 	if err != nil {
 		log.Printf("[ERROR] (%s) Failed to import Cache: %v\n", p.label, err)
 	}
 
 	// Import Metadata
-	p.state, err = LoadState(p.stateFile, p.label)
+	state, err = LoadState(p.stateFile, p.label)
 	if err != nil {
 		log.Printf("[ERROR] (%s) Failed to load State: %v\n", p.label, err)
 	}
 
 	// Filter Streams
-	err = FilterCategories(&p.categories, p.banned, p.label)
+	err = FilterCategories(&categories, banned, p.label)
 	if err != nil {
 		log.Printf("[ERROR] (%s) Failed to filter Categories: %v\n", p.label, err)
 	}
 
-	err = FilterStreams(client, &p.streams, p.categories, p.cache, &p.state, p.label)
+	err = FilterStreams(client, &streams, categories, cache, &state, p.label)
 	if err != nil {
 		log.Printf("[ERROR] (%s) Failed to filter Streams: %v\n", p.label, err)
 	}
 
 	// Export Streams
-	err = Export(client, &p.streams, &p.state, p.directory, p.label)
+	err = Export(client, &streams, &state, p.directory, p.label)
 	if err != nil {
 		log.Printf("[ERROR] (%s) Unable to export Streams: %v\n", p.label, err)
 	}
@@ -178,23 +151,16 @@ func (p Program[T]) Run(client *api.XtreamClient, config Config) error {
 	}
 
 	// Export Cache
-	err = ExportCache(&p.streams, &p.cache, &p.state, p.cacheFile, p.label)
+	err = ExportCache(&streams, &cache, &state, p.cacheFile, p.label)
 	if err != nil {
 		log.Printf("[ERROR] (%s) Failed to export Cache: %v\n", p.label, err)
 	}
 
 	// Export Metadata
-	err = SaveState(&p.state, p.stateFile, p.label)
+	err = SaveState(&state, p.stateFile, p.label)
 	if err != nil {
 		log.Printf("[ERROR] (%s) Failed to save State: %v\n", p.label, err)
 	}
-
-	// Clear Program
-	p.streams = map[int]T{}
-	p.categories = map[int]api.Category{}
-	p.banned = []string{}
-	p.cache = map[int]T{}
-	p.state = map[int]*State{}
 
 	return nil
 }
