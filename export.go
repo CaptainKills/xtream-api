@@ -46,9 +46,16 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, state *m
 	i := 0
 	for id, stream := range *streams {
 		// Output Progress Information
-		if length >= debugPercent && i%(length/debugPercent) == 0 || i == length-1 {
-			percentage := float64(i) / float64(length) * 100
-			log.Printf("[DEBUG] (%s) Export Progress: %6d / %6d (%6.2f%%, %7.2f req/min)\tSTRM: %6d, IMG: %6d, NFO: %6d\n", label, i+1, length, percentage, client.GetRequestRate(), updated_streams, updated_images, updated_nfos)
+		percentage := float64(i) / float64(length) * 100
+
+		if length >= debugPercent {
+			checkpoint := length / debugPercent
+
+			if i%checkpoint == 0 || i == length-1 {
+				progress(label, i+1, length, percentage, client.GetRequestRate(), updated_streams, updated_images, updated_nfos)
+			}
+		} else {
+			progress(label, i+1, length, percentage, client.GetRequestRate(), updated_streams, updated_images, updated_nfos)
 		}
 
 		updated_stream, updated_image, updated_nfo, err := stream.Export(client, dir)
@@ -92,4 +99,8 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, state *m
 	log.Printf("[INFO] (%s) Streams Processed: %d, Streams Updated: %d, Images Updated: %d, Metadata Updated: %d\n", label, length, updated_streams, updated_images, updated_nfos)
 
 	return nil
+}
+
+func progress(label string, current int, total int, percentage float64, rate float64, streams int, images int, nfo int) {
+	log.Printf("[DEBUG] (%s) Export Progress: %6d / %6d (%6.2f%%, %7.2f req/min)\tSTRM: %6d, IMG: %6d, NFO: %6d\n", label, current, total, percentage, rate, streams, images, nfo)
 }
