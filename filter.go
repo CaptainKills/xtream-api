@@ -36,11 +36,12 @@ func FilterCategories(data *map[int]api.Category, bannedCategories []string, lab
 }
 
 func FilterStreams[T api.Stream](client *api.XtreamClient, streams *map[int]T, categories map[int]api.Category, cache map[int]T, state *map[int]*State, label string) error {
-	count_banned := 0
 	count_updated := 0
 	count_missing := 0
 	count_image := 0
 	count_nfo := 0
+
+	count_banned := 0
 	count_none := 0
 
 	total := len(*streams)
@@ -95,7 +96,7 @@ func FilterStreams[T api.Stream](client *api.XtreamClient, streams *map[int]T, c
 	}
 
 	log.Printf("[INFO] (%s) Filtered Out %6d out of %6d (%6d Remaining)\n", label, filtered, total, len(*streams))
-	log.Printf("[DEBUG] (%s) BAN=%6d, UPD=%6d, MIS=%6d, IMG=%6d, NFO=%6d, NONE=%6d\n", label, count_banned, count_updated, count_missing, count_image, count_nfo, count_none)
+	log.Printf("[DEBUG] (%s) UPD=%6d, MIS=%6d, IMG=%6d, NFO=%6d | BAN=%6d, NONE=%6d\n", label, count_updated, count_missing, count_image, count_nfo, count_banned, count_none)
 
 	return nil
 }
