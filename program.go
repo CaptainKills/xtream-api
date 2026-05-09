@@ -8,6 +8,8 @@ import (
 )
 
 type Program[T api.Stream] struct {
+	disabled func(Config) bool
+
 	loader      func(*api.XtreamClient) (map[int]T, error)
 	categoriser func(*api.XtreamClient) (map[int]api.Category, error)
 	moderator   func(Config) []string
@@ -22,6 +24,10 @@ type Program[T api.Stream] struct {
 type Config struct {
 	LaunchTime time.Time
 
+	DisabledLive   bool
+	DisabledMovies bool
+	DisabledSeries bool
+
 	BannedLiveStreams []string
 	BannedMovies      []string
 	BannedSeries      []string
@@ -34,6 +40,10 @@ type State struct {
 }
 
 var livestreams = Program[api.LiveStream]{
+	disabled: func(c Config) bool {
+		return c.DisabledLive
+	},
+
 	loader: func(c *api.XtreamClient) (map[int]api.LiveStream, error) {
 		return c.GetLiveStreams()
 	},
@@ -52,6 +62,10 @@ var livestreams = Program[api.LiveStream]{
 }
 
 var movies = Program[api.Movie]{
+	disabled: func(c Config) bool {
+		return c.DisabledMovies
+	},
+
 	loader: func(c *api.XtreamClient) (map[int]api.Movie, error) {
 		return c.GetMovies()
 	},
@@ -70,6 +84,10 @@ var movies = Program[api.Movie]{
 }
 
 var series = Program[api.Series]{
+	disabled: func(c Config) bool {
+		return c.DisabledSeries
+	},
+
 	loader: func(c *api.XtreamClient) (map[int]api.Series, error) {
 		return c.GetSeries()
 	},
@@ -89,6 +107,13 @@ var series = Program[api.Series]{
 
 func (p *Program[T]) Run(client *api.XtreamClient, config Config) error {
 	var err error
+
+	// Check if program is disabled
+	if p.disabled(config) {
+		log.Printf("[INFO] Program Disabled: %s\n", p.label)
+		return nil
+	}
+	log.Printf("[INFO] Running Program: %s\n", p.label)
 
 	// Initialise Program
 	streams := map[int]T{}

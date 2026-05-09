@@ -42,7 +42,7 @@ func main() {
 	log.Printf("  OS/Arch:    %s/%s", runtime.GOOS, runtime.GOARCH)
 
 	// Environment Variables
-	url, username, password := GetEnvironmentCredentials()
+	url, username, password := GetCredentials()
 	config := GetApplicationConfig()
 	options := GetXtreamOptions()
 
