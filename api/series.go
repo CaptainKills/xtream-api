@@ -155,13 +155,14 @@ func (s Series) Export(c *XtreamClient, dir string) (int, int, int, error) {
 	}
 
 	// Write Image to File
-	if c.Options.ImagesEnabled && !utils.ImageExists(pathImage) && strings.HasPrefix(s.Cover, "http") {
+	if c.Options.ImagesEnabled {
 		image, err := c.sendRequest(s.Cover)
 		if err != nil {
 			// Ignore error for image fetching
-			// log.Printf("[WARNING] Failed to fetch Image: %v\n", err)
+			// log.Printf("[WARNING] Failed to fetch Image (%d): %v\n", s.Id, err)
+			updated_images += 1
 		} else {
-			updated_image, err := utils.WriteImage(pathImage, image)
+			updated_image, err := utils.WriteFile(pathImage, image)
 			if err != nil {
 				return updated_streams, updated_images, updated_nfos, err
 			}
@@ -172,9 +173,10 @@ func (s Series) Export(c *XtreamClient, dir string) (int, int, int, error) {
 
 	// Write NFO to File
 	if c.Options.MetadataEnabled {
-		updated_nfo, err := utils.WriteFile(pathNfo, info.GenerateNfo())
+		updated_nfo, err := utils.WriteFile(pathNfo, []byte(info.GenerateNfo()))
 		if err != nil {
-			return updated_streams, updated_images, updated_nfos, err
+			// Ignore error for metadata fetching
+			// log.Printf("[WARNING] Failed to fetch Metadata (%d): %v\n", s.Id, err)
 		}
 
 		updated_nfos += updated_nfo
@@ -223,14 +225,14 @@ func (e Episode) Export(c *XtreamClient, dir string) (int, int, error) {
 	url := c.buildURL("series", id, e.Extension)
 
 	// Write Stream to File
-	updated_stream, err = utils.WriteFile(pathStream, url)
+	updated_stream, err = utils.WriteFile(pathStream, []byte(url))
 	if err != nil {
 		return updated_stream, updated_nfo, err
 	}
 
 	// Write NFO to File
 	if c.Options.MetadataEnabled {
-		updated_nfo, err = utils.WriteFile(pathNfo, e.GenerateNfo())
+		updated_nfo, err = utils.WriteFile(pathNfo, []byte(e.GenerateNfo()))
 		if err != nil {
 			return updated_stream, updated_nfo, err
 		}

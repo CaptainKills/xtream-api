@@ -118,19 +118,20 @@ func (m Movie) Export(c *XtreamClient, dir string) (int, int, int, error) {
 	}
 
 	// Write Stream to File
-	updated_stream, err = utils.WriteFile(pathStream, url)
+	updated_stream, err = utils.WriteFile(pathStream, []byte(url))
 	if err != nil {
 		return updated_stream, updated_image, updated_nfo, err
 	}
 
 	// Write Image to File
-	if c.Options.ImagesEnabled && !utils.ImageExists(pathImage) && strings.HasPrefix(m.Icon, "http") {
+	if c.Options.ImagesEnabled {
 		image, err := c.sendRequest(m.Icon)
 		if err != nil {
 			// Ignore error for image fetching
-			// log.Printf("[WARNING] Failed to fetch Image: %v\n", err)
+			// log.Printf("[WARNING] Failed to fetch Image (%d): %v\n", m.Id, err)
+			updated_image = 1
 		} else {
-			updated_image, err = utils.WriteImage(pathImage, image)
+			updated_image, err = utils.WriteFile(pathImage, image)
 			if err != nil {
 				return updated_stream, updated_image, updated_nfo, err
 			}
@@ -141,10 +142,10 @@ func (m Movie) Export(c *XtreamClient, dir string) (int, int, int, error) {
 	if c.Options.MetadataEnabled {
 		info, err := c.GetMovieInfo(m.Id)
 		if err != nil {
-			// Ignore error for info fetching
-			// log.Printf("[WARNING] Failed to fetch Movie Info: %v\n", err)
+			// Ignore error for metadata fetching
+			// log.Printf("[WARNING] Failed to fetch Metadata (%d): %v\n", m.Id, err)
 		} else {
-			updated_nfo, err = utils.WriteFile(pathNfo, info.GenerateNfo())
+			updated_nfo, err = utils.WriteFile(pathNfo, []byte(info.GenerateNfo()))
 			if err != nil {
 				return updated_stream, updated_image, updated_nfo, err
 			}
