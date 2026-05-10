@@ -32,6 +32,7 @@ jobs:
       env:
         GOOS: ${{ matrix.goos }}
         GOARCH: ${{ matrix.goarch }}
+        CGO_ENABLED: 0
       run: |
         BINARY_NAME="xtream-api"
         BINARY_NAME+="-${{ matrix.goos }}-${{ matrix.goarch }}"
