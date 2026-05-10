@@ -23,12 +23,16 @@ const (
 	ENV_REQUESTS = "XTREAM_REQUESTS"
 	ENV_TIMEOUT  = "XTREAM_TIMEOUT"
 
+	ENV_DISABLED_LIVE   = "XTREAM_DISABLED_LIVE"
+	ENV_DISABLED_MOVIES = "XTREAM_DISABLED_MOVIES"
+	ENV_DISABLED_SERIES = "XTREAM_DISABLED_SERIES"
+
 	ENV_BANNED_LIVE   = "XTREAM_BANNED_LIVE"
 	ENV_BANNED_MOVIES = "XTREAM_BANNED_MOVIES"
 	ENV_BANNED_SERIES = "XTREAM_BANNED_SERIES"
 )
 
-func GetEnvironmentCredentials() (string, string, string) {
+func GetCredentials() (string, string, string) {
 	// Xtream URL
 	url := os.Getenv(ENV_URL)
 	if url == "" {
@@ -50,8 +54,8 @@ func GetEnvironmentCredentials() (string, string, string) {
 	return url, username, password
 }
 
-func GetEnvironmentOptions() api.XtreamOptions {
-	var options api.XtreamOptions
+func GetApplicationConfig() Config {
+	var config Config
 
 	// Launch Time
 	launch := os.Getenv(ENV_LAUNCH)
@@ -59,18 +63,80 @@ func GetEnvironmentOptions() api.XtreamOptions {
 		t, err := time.Parse(time.TimeOnly, launch)
 		if err != nil {
 			log.Printf("[WARNING] '%s' Environment Variable Invalid! %v\n", ENV_LAUNCH, err)
-			options.LaunchTime = time.Date(0, 0, 1, 0, 0, 0, 0, time.Now().Location())
+			config.LaunchTime = time.Date(0, 0, 1, 0, 0, 0, 0, time.Now().Location())
 		} else {
 			now := time.Now()
-			options.LaunchTime = time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), t.Minute(), t.Second(), 0, now.Location())
+			config.LaunchTime = time.Date(now.Year(), now.Month(), now.Day(), t.Hour(), t.Minute(), t.Second(), 0, now.Location())
 
-			if now.After(options.LaunchTime) {
-				options.LaunchTime = options.LaunchTime.AddDate(0, 0, 1)
+			if now.After(config.LaunchTime) {
+				config.LaunchTime = config.LaunchTime.AddDate(0, 0, 1)
 			}
 		}
 	} else {
-		options.LaunchTime = time.Date(0, 0, 1, 0, 0, 0, 0, time.Now().Location())
+		config.LaunchTime = time.Date(0, 0, 1, 0, 0, 0, 0, time.Now().Location())
 	}
+
+	// Enabled Programs
+	disabled := os.Getenv(ENV_DISABLED_LIVE)
+	if disabled != "" {
+		switch disabled {
+		case "true":
+			config.DisabledLive = true
+		case "false":
+			config.DisabledLive = false
+		default:
+			log.Printf("[WARNING] '%s' Environment Variable Invalid!\n", ENV_DISABLED_LIVE)
+			config.DisabledLive = false
+		}
+	} else {
+		config.DisabledLive = false
+	}
+
+	disabled = os.Getenv(ENV_DISABLED_MOVIES)
+	if disabled != "" {
+		switch disabled {
+		case "true":
+			config.DisabledMovies = true
+		case "false":
+			config.DisabledMovies = false
+		default:
+			log.Printf("[WARNING] '%s' Environment Variable Invalid!\n", ENV_DISABLED_MOVIES)
+			config.DisabledMovies = false
+		}
+	} else {
+		config.DisabledMovies = false
+	}
+
+	disabled = os.Getenv(ENV_DISABLED_SERIES)
+	if disabled != "" {
+		switch disabled {
+		case "true":
+			config.DisabledSeries = true
+		case "false":
+			config.DisabledSeries = false
+		default:
+			log.Printf("[WARNING] '%s' Environment Variable Invalid!\n", ENV_DISABLED_SERIES)
+			config.DisabledSeries = false
+		}
+	} else {
+		config.DisabledSeries = false
+	}
+
+	// Banned Categories
+	banned := os.Getenv(ENV_BANNED_LIVE)
+	config.BannedLiveStreams = strings.Split(banned, ",")
+
+	banned = os.Getenv(ENV_BANNED_MOVIES)
+	config.BannedMovies = strings.Split(banned, ",")
+
+	banned = os.Getenv(ENV_BANNED_SERIES)
+	config.BannedSeries = strings.Split(banned, ",")
+
+	return config
+}
+
+func GetXtreamOptions() api.XtreamOptions {
+	var options api.XtreamOptions
 
 	// Images Enabled
 	images := os.Getenv(ENV_IMAGES)
@@ -131,18 +197,6 @@ func GetEnvironmentOptions() api.XtreamOptions {
 			options.RequestTimeout = time.Duration(t)
 		}
 	}
-
-	// Banned LiveStream Categories
-	banned := os.Getenv(ENV_BANNED_LIVE)
-	options.BannedLiveStreams = strings.Split(banned, ",")
-
-	// Banned Movie Categories
-	banned = os.Getenv(ENV_BANNED_MOVIES)
-	options.BannedMovies = strings.Split(banned, ",")
-
-	// Banned Series Categories
-	banned = os.Getenv(ENV_BANNED_SERIES)
-	options.BannedSeries = strings.Split(banned, ",")
 
 	return options
 }

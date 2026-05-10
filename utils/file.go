@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"log"
 	"os"
 	"strings"
 )
@@ -26,44 +25,8 @@ func GetImageExtension(url string) string {
 	return extension
 }
 
-func ImageExists(file string) bool {
-	f, err := os.Open(file)
-
-	if err != nil && os.IsNotExist(err) {
-		return false
-	} else if err != nil {
-		log.Printf("[WARNING] Failed to check if image exists: %v\n", err)
-		return false
-	}
-
-	defer f.Close()
-	return true
-}
-
-func WriteFile(file string, data string) (int, error) {
-	updated := 0
-
-	// Try to read existing file
-	f, err := os.ReadFile(file)
-	if err != nil && !os.IsNotExist(err) {
-		return updated, err
-	}
-
-	// Check if file already exists & has the correct stream
-	if string(f) != data {
-		// In case file does not exist or has the incorrect data, overwrite file
-		err := os.WriteFile(file, []byte(data), 0o644)
-		if err != nil {
-			return updated, err
-		}
-		updated = 1
-	}
-
-	return updated, nil
-}
-
-func WriteImage(file string, image []byte) (int, error) {
-	err := os.WriteFile(file, image, 0o644)
+func WriteFile(file string, data []byte) (int, error) {
+	err := os.WriteFile(file, data, 0o644)
 	if err != nil {
 		return 0, err
 	}

@@ -7,19 +7,22 @@ Player.
 
 ## Environment Variables
 
-| **Variables**           | **Description**                                                         | **Default** |
-| ----------------------- | ----------------------------------------------------------------------- | ----------- |
-| `XTREAM_URL`            | The URL used for fetching IPTV streams.                                 | ` `        |
-| `XTREAM_USERNAME`       | The Username used to log in to the IPTV service.                        | ` `        |
-| `XTREAM_PASSWORD`       | The Password used to log in to the IPTV service.                        | ` `        |
-| `XTREAM_LAUNCH`         | The time at which the tool should run, in `hh:mm:ss` format.*           | ` `        |
-| `XTREAM_IMAGES`         | Whether the tool should download images alongside stream file.          | `false`     |
-| `XTREAM_METADATA`       | Whether the tool should download metadata alongside stream file.        | `false`     |
-| `XTREAM_REQUESTS`       | The maximum number of requests per minute.                              | `1000`      |
-| `XTREAM_TIMEOUT`        | The maximum time before a request returns a timeout error, in seconds.  | `30`        |
-| `XTREAM_BANNED_LIVE`    | A ',' separated list of banned livestream (partial) **category** names. | ` `        |
-| `XTREAM_BANNED_MOVIES`  | A ',' separated list of banned movie (partial) **category** names.      | ` `        |
-| `XTREAM_BANNED_SERIES`  | A ',' separated list of banned series (partial) **category** names.     | ` `        |
+| **Variables**            | **Description**                                                         | **Default** |
+| ------------------------ | ----------------------------------------------------------------------- | ----------- |
+| `XTREAM_URL`             | The URL used for fetching IPTV streams.                                 | ` `         |
+| `XTREAM_USERNAME`        | The Username used to log in to the IPTV service.                        | ` `         |
+| `XTREAM_PASSWORD`        | The Password used to log in to the IPTV service.                        | ` `         |
+| `XTREAM_LAUNCH`          | The time at which the tool should run, in `hh:mm:ss` format.*           | ` `         |
+| `XTREAM_IMAGES`          | Whether the tool should download images alongside stream file.          | `false`     |
+| `XTREAM_METADATA`        | Whether the tool should download metadata alongside stream file.        | `false`     |
+| `XTREAM_REQUESTS`        | The maximum number of requests per minute.                              | `1000`      |
+| `XTREAM_TIMEOUT`         | The maximum time before a request returns a timeout error, in seconds.  | `30`        |
+| `XTREAM_DISABLED_LIVE`   | Whether the tool should not download any Livestreams.                   | `false`     |
+| `XTREAM_DISABLED_MOVIES` | Whether the tool should not download any Movies.                        | `false`     |
+| `XTREAM_DISABLED_SERIES` | Whether the tool should not download any Series.                        | `false`     |
+| `XTREAM_BANNED_LIVE`     | A ',' separated list of banned livestream (partial) **category** names. | ` `         |
+| `XTREAM_BANNED_MOVIES`   | A ',' separated list of banned movie (partial) **category** names.      | ` `         |
+| `XTREAM_BANNED_SERIES`   | A ',' separated list of banned series (partial) **category** names.     | ` `         |
 
 **NOTE:** In case `XTREAM_LAUNCH` is not specified, the tool will run immediately. After that, every
 24 hours from that time onwards. If `XTREAM_LAUNCH` is properly specified, it will run at every 24
@@ -42,10 +45,16 @@ services:
 
       # Optional Environment Variables
       # - XTREAM_LAUNCH="00:00:00"        # Set Launch Time at 00:00:00 (Midnight)
+
       # - XTREAM_IMAGES=true              # Enable Image Fetching
       # - XTREAM_METADATA=true            # Enable Metadata Fetching
       # - XTREAM_REQUESTS=1000            # Maximum requests per minute
       # - XTREAM_TIMEOUT=30               # Maximum time before request returns timeout error
+
+      # - XTREAM_DISABLED_LIVE=true       # Disable Livestreams
+      # - XTREAM_DISABLED_MOVIES=true     # Disable Livestreams
+      # - XTREAM_DISABLED_SERIES=true     # Disable Livestreams
+
       # - XTREAM_BANNED_LIVE=""           # ',' Seperated list of banned livestream categories
       # - XTREAM_BANNED_MOVIES=""         # ',' Seperated list of banned movie categories
       # - XTREAM_BANNED_SERIES=""         # ',' Seperated list of banned series categories
@@ -76,6 +85,9 @@ The content fetched by this tool will be downloaded in the `/media` directory:
 * `/media/live` directory for Livestream content.
 * `/media/movies` for Movie content.
 * `/media/series` for Series content.
+
+To disable any of the three types of content, use the `XTREAM_DISABLED_...` environment variables to
+disable them.
 
 The tool will use the `/cache` directory to store any cached content for future runs.
 

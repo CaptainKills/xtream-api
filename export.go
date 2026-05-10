@@ -22,8 +22,7 @@ var (
 	directorySeries      = filepath.Join(directoryRoot, "series")
 )
 
-
-func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, metadata *map[int]*api.XtreamMetadata, dir string, label string) error {
+func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, state *map[int]*State, dir string, label string) error {
 	updated_streams := 0
 	updated_images := 0
 	updated_nfos := 0
@@ -47,9 +46,16 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, metadata
 	i := 0
 	for id, stream := range *streams {
 		// Output Progress Information
-		if length >= debugPercent && i%(length/debugPercent) == 0 || i == length-1 {
-			percentage := float64(i) / float64(length) * 100
-			log.Printf("[DEBUG] (%s) Export Progress: %6d / %6d (%6.2f%%, %7.2f req/min)\tSTRM: %6d, IMG: %6d, NFO: %6d\n", label, i+1, length, percentage, client.GetRequestRate(), updated_streams, updated_images, updated_nfos)
+		percentage := float64(i) / float64(length) * 100
+
+		if length >= debugPercent {
+			checkpoint := length / debugPercent
+
+			if i%checkpoint == 0 || i == length-1 {
+				progress(label, i+1, length, percentage, client.GetRequestRate(), updated_streams, updated_images, updated_nfos)
+			}
+		} else {
+			progress(label, i+1, length, percentage, client.GetRequestRate(), updated_streams, updated_images, updated_nfos)
 		}
 
 		updated_stream, updated_image, updated_nfo, err := stream.Export(client, dir)
@@ -59,29 +65,29 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, metadata
 		}
 
 		// Metadata Analysis
-		md, ok := (*metadata)[id]
+		s, ok := (*state)[id]
 		if !ok {
-			md = &api.XtreamMetadata{}
+			s = &State{}
 		}
 
 		if updated_stream > 0 {
-			md.Strm = true
+			s.Strm = true
 		}
 
 		if updated_image > 0 {
-			md.Image = true
+			s.Image = true
 		}
 
 		switch any(stream).(type) {
 		case api.LiveStream:
-			md.Nfo = true // LiveStream does not have NFO, so set to true to disable update check
+			s.Nfo = true // LiveStream does not have NFO, so set to true to disable update check
 		default:
 			if updated_nfo > 0 {
-				md.Nfo = true
+				s.Nfo = true
 			}
 		}
 
-		(*metadata)[id] = md
+		(*state)[id] = s
 
 		// Update Counters
 		updated_streams += updated_stream
@@ -93,4 +99,8 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, metadata
 	log.Printf("[INFO] (%s) Streams Processed: %d, Streams Updated: %d, Images Updated: %d, Metadata Updated: %d\n", label, length, updated_streams, updated_images, updated_nfos)
 
 	return nil
+}
+
+func progress(label string, current int, total int, percentage float64, rate float64, streams int, images int, nfo int) {
+	log.Printf("[DEBUG] (%s) Export Progress: %6d / %6d (%6.2f%%, %7.2f req/min)\tSTRM: %6d, IMG: %6d, NFO: %6d\n", label, current, total, percentage, rate, streams, images, nfo)
 }
