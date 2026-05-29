@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	Version  = "v2.1.0"
+	Version  = "v2.2.0"
 	Commit   = "unknown"
 	Branch   = "unknown"
 	Date     = "unknown"
@@ -88,7 +88,7 @@ func main() {
 
 		// Wait Until Next Run
 		diff := time.Since(start).Round(time.Millisecond)
-		next := start.Add(24 * time.Hour)
+		next := start.Add(config.LaunchPeriod * time.Hour)
 
 		log.Printf("[INFO] Run Duration: %s. Next run scheduled at: %s\n", diff.String(), next.Format(time.DateTime))
 		time.Sleep(time.Until(next))

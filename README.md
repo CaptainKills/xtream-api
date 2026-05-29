@@ -13,6 +13,7 @@ Player.
 | `XTREAM_USERNAME`        | The Username used to log in to the IPTV service.                        | ` `         |
 | `XTREAM_PASSWORD`        | The Password used to log in to the IPTV service.                        | ` `         |
 | `XTREAM_LAUNCH`          | The time at which the tool should run, in `hh:mm:ss` format.*           | ` `         |
+| `XTREAM_PERIOD`          | The period with which the tool should run, in hours.                    | `24`        |
 | `XTREAM_IMAGES`          | Whether the tool should download images alongside stream file.          | `false`     |
 | `XTREAM_METADATA`        | Whether the tool should download metadata alongside stream file.        | `false`     |
 | `XTREAM_REQUESTS`        | The maximum number of requests per minute.                              | `1000`      |
@@ -27,6 +28,11 @@ Player.
 **NOTE:** In case `XTREAM_LAUNCH` is not specified, the tool will run immediately. After that, every
 24 hours from that time onwards. If `XTREAM_LAUNCH` is properly specified, it will run at every 24
 hours at that specific time.
+
+The `XTREAM_PERIOD` environment variable can be used to run the tool
+more often, for example every 12 hours. It is recommended to only use this after the initial few
+runs have been performed, and only small additions are being made, as this might cause the tool to
+run continuously because the runtime is longer than the period.
 
 ## Docker Compose
 
@@ -45,6 +51,7 @@ services:
 
       # Optional Environment Variables
       # - XTREAM_LAUNCH="00:00:00"        # Set Launch Time at 00:00:00 (Midnight)
+      # - XTREAM_PERIOD=12                # Set Launch Period to every 12 hours
 
       # - XTREAM_IMAGES=true              # Enable Image Fetching
       # - XTREAM_METADATA=true            # Enable Metadata Fetching

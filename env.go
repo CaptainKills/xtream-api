@@ -18,6 +18,7 @@ const (
 
 	// Optional Environment Variables
 	ENV_LAUNCH   = "XTREAM_LAUNCH"
+	ENV_PERIOD   = "XTREAM_PERIOD"
 	ENV_IMAGES   = "XTREAM_IMAGES"
 	ENV_METADATA = "XTREAM_METADATA"
 	ENV_REQUESTS = "XTREAM_REQUESTS"
@@ -74,6 +75,20 @@ func GetApplicationConfig() Config {
 		}
 	} else {
 		config.LaunchTime = time.Date(0, 0, 1, 0, 0, 0, 0, time.Now().Location())
+	}
+
+	// Launch Period
+	period := os.Getenv(ENV_PERIOD)
+	if period != "" {
+		p, err := strconv.Atoi(period)
+		if err != nil {
+			log.Printf("[WARNING] '%s' Environment Variable Invalid! %v\n", ENV_PERIOD, err)
+			config.LaunchPeriod = 24
+		} else {
+			config.LaunchPeriod = time.Duration(p)
+		}
+	} else {
+		config.LaunchPeriod = 24
 	}
 
 	// Enabled Programs

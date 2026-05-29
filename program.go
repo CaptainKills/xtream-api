@@ -22,7 +22,8 @@ type Program[T api.Stream] struct {
 }
 
 type Config struct {
-	LaunchTime time.Time
+	LaunchTime   time.Time
+	LaunchPeriod time.Duration
 
 	DisabledLive   bool
 	DisabledMovies bool
