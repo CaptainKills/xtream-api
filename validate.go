@@ -5,9 +5,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/CaptainKills/xtream-api/metrics"
 )
 
-func Validate(dir string, label string) error {
+func Validate(dir string, label string, stats *metrics.StreamStatistics) error {
 	total_streams := 0
 	total_covers := 0
 	total_metadata := 0
@@ -100,6 +102,10 @@ func Validate(dir string, label string) error {
 	}
 
 	log.Printf("[INFO] (%s) Validated %6d Streams, %6d Covers, %6d Metadata\n", label, total_streams, total_covers, total_metadata)
+
+	stats.ValidatedStreams = total_streams
+	stats.ValidatedImages = total_covers
+	stats.ValidatedMetadata = total_metadata
 
 	return nil
 }
@@ -221,7 +227,6 @@ func cleanDirectory(root string, dir []os.DirEntry) error {
 			}
 		}
 	}
-
 
 	log.Printf("[DEBUG] Cleaned %d Streams, %d Images, %d Metadata\n", deletedStreams, deletedImages, deletedMetadata)
 

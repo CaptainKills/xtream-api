@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/CaptainKills/xtream-api/api"
+	"github.com/CaptainKills/xtream-api/metrics"
 )
 
 const (
@@ -22,7 +23,7 @@ var (
 	directorySeries      = filepath.Join(directoryRoot, "series")
 )
 
-func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, state *map[int]*State, dir string, label string) error {
+func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, state *map[int]*State, dir string, label string, stats *metrics.StreamStatistics) error {
 	updated_streams := 0
 	updated_images := 0
 	updated_nfos := 0
@@ -97,6 +98,11 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, state *m
 	}
 
 	log.Printf("[INFO] (%s) Streams Processed: %d, Streams Updated: %d, Images Updated: %d, Metadata Updated: %d\n", label, length, updated_streams, updated_images, updated_nfos)
+
+	stats.UpdatedStreams = updated_streams
+	stats.UpdatedImages = updated_images
+	stats.UpdatedMetadata = updated_nfos
+	stats.RequestRate = client.GetRequestRate()
 
 	return nil
 }

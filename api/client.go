@@ -46,11 +46,22 @@ type XtreamClient struct {
 }
 
 type XtreamOptions struct {
-	ImagesEnabled   bool
-	MetadataEnabled bool
+	LaunchTime   time.Time     `json:"launch"`
+	LaunchPeriod time.Duration `json:"period"`
 
-	RequestPerMinute time.Duration
-	RequestTimeout   time.Duration
+	DisabledLive   bool `json:"disabled_live"`
+	DisabledMovies bool `json:"disabled_movies"`
+	DisabledSeries bool `json:"disabled_series"`
+
+	BannedLiveStreams []string `json:"banned_live"`
+	BannedMovies      []string `json:"banned_movies"`
+	BannedSeries      []string `json:"banned_series"`
+
+	ImagesEnabled   bool `json:"images_enabled"`
+	MetadataEnabled bool `json:"metadata_enabled"`
+
+	RequestPerMinute time.Duration `json:"req_per_min"`
+	RequestTimeout   time.Duration `json:"req_timeout"`
 }
 
 func NewClient(url string, username string, password string, options XtreamOptions) *XtreamClient {
