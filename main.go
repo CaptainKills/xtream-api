@@ -32,7 +32,7 @@ func init() {
 		}
 	}
 
-	metrics.UpdateApp(metrics.AppStatistics{Version: Version, Commit: Commit, Branch: Branch, Date: Date, Modified: Modified})
+	metrics.UpdateApp(metrics.AppMetrics{Version: Version, Commit: Commit, Branch: Branch, Date: Date, Modified: Modified})
 }
 
 func main() {
@@ -95,7 +95,9 @@ func main() {
 		end := time.Now()
 		diff := time.Since(start).Round(time.Millisecond)
 		next := start.Add(options.LaunchPeriod * time.Hour)
-		metrics.UpdateTime(metrics.TimeStatistics{Start: start, End: end, Duration: diff, Next: next})
+
+		metrics.UpdateTime(metrics.TimeMetrics{Start: start, End: end, Duration: diff, Next: next})
+		metrics.ExportMetrics()
 
 		log.Printf("[INFO] Run Duration: %s. Next run scheduled at: %s\n", diff.String(), next.Format(time.DateTime))
 		time.Sleep(time.Until(next))

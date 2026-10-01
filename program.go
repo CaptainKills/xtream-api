@@ -13,7 +13,7 @@ type Program[T api.Stream] struct {
 	loader      func(*api.XtreamClient) (map[int]T, error)
 	categoriser func(*api.XtreamClient) (map[int]api.Category, error)
 	moderator   func(api.XtreamOptions) []string
-	register    func(metrics.StreamStatistics)
+	register    func(metrics.StreamMetrics)
 
 	cacheFile string
 	stateFile string
@@ -42,8 +42,8 @@ var livestreams = Program[api.LiveStream]{
 	moderator: func(options api.XtreamOptions) []string {
 		return options.BannedLiveStreams
 	},
-	register: func(stats metrics.StreamStatistics) {
-		metrics.UpdateLivestreams(stats)
+	register: func(m metrics.StreamMetrics) {
+		metrics.UpdateLivestreams(m)
 	},
 
 	cacheFile: cacheFileLivestreams,
@@ -67,8 +67,8 @@ var movies = Program[api.Movie]{
 	moderator: func(options api.XtreamOptions) []string {
 		return options.BannedMovies
 	},
-	register: func(stats metrics.StreamStatistics) {
-		metrics.UpdateMovies(stats)
+	register: func(m metrics.StreamMetrics) {
+		metrics.UpdateMovies(m)
 	},
 
 	cacheFile: cacheFileMovies,
@@ -92,8 +92,8 @@ var series = Program[api.Series]{
 	moderator: func(options api.XtreamOptions) []string {
 		return options.BannedSeries
 	},
-	register: func(stats metrics.StreamStatistics) {
-		metrics.UpdateSeries(stats)
+	register: func(m metrics.StreamMetrics) {
+		metrics.UpdateSeries(m)
 	},
 
 	cacheFile: cacheFileSeries,
@@ -119,7 +119,7 @@ func (p *Program[T]) Run(client *api.XtreamClient) error {
 	banned := []string{}
 	cache := map[int]T{}
 	state := map[int]*State{}
-	stats := metrics.StreamStatistics{}
+	m := metrics.StreamMetrics{}
 
 	// Fetch Streams
 	streams, err = p.loader(client)
@@ -127,7 +127,7 @@ func (p *Program[T]) Run(client *api.XtreamClient) error {
 		log.Printf("[ERROR] (%s) Failed to retrieve Streams: %v\n", p.label, err)
 	}
 	log.Printf("[INFO] (%s) Found %6d Streams\n", p.label, len(streams))
-	stats.Streams = len(streams)
+	m.Streams = len(streams)
 
 	// Fetch Categories
 	categories, err = p.categoriser(client)
@@ -135,7 +135,7 @@ func (p *Program[T]) Run(client *api.XtreamClient) error {
 		log.Printf("[ERROR] (%s) Failed to retrieve Categories: %v\n", p.label, err)
 	}
 	log.Printf("[INFO] (%s) Found %6d Categories\n", p.label, len(categories))
-	stats.Categories = len(categories)
+	m.Categories = len(categories)
 
 	// Fetch Banned
 	banned = p.moderator(client.Options)
@@ -158,22 +158,22 @@ func (p *Program[T]) Run(client *api.XtreamClient) error {
 	if err != nil {
 		log.Printf("[ERROR] (%s) Failed to filter Categories: %v\n", p.label, err)
 	}
-	stats.FilteredCategories = len(categories)
+	m.FilteredCategories = len(categories)
 
 	err = FilterStreams(client, &streams, categories, cache, &state, p.label)
 	if err != nil {
 		log.Printf("[ERROR] (%s) Failed to filter Streams: %v\n", p.label, err)
 	}
-	stats.FilteredStreams = len(streams)
+	m.FilteredStreams = len(streams)
 
 	// Export Streams
-	err = Export(client, &streams, &state, p.directory, p.label, &stats)
+	err = Export(client, &streams, &state, p.directory, p.label, &m)
 	if err != nil {
 		log.Printf("[ERROR] (%s) Unable to export Streams: %v\n", p.label, err)
 	}
 
 	// Validate Streams
-	err = Validate(p.directory, p.label, &stats)
+	err = Validate(p.directory, p.label, &m)
 	if err != nil {
 		log.Printf("[ERROR] (%s) Unable to validate Streams: %v\n", p.label, err)
 	}
@@ -183,17 +183,17 @@ func (p *Program[T]) Run(client *api.XtreamClient) error {
 	if err != nil {
 		log.Printf("[ERROR] (%s) Failed to export Cache: %v\n", p.label, err)
 	}
-	stats.Cached = len(cache)
+	m.Cached = len(cache)
 
 	// Export Metadata
 	err = SaveState(&state, p.stateFile, p.label)
 	if err != nil {
 		log.Printf("[ERROR] (%s) Failed to save State: %v\n", p.label, err)
 	}
-	stats.Metadata = len(state)
+	m.Metadata = len(state)
 
 	// Register Statistics
-	p.register(stats)
+	p.register(m)
 
 	return nil
 }

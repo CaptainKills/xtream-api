@@ -9,7 +9,7 @@ import (
 	"github.com/CaptainKills/xtream-api/metrics"
 )
 
-func Validate(dir string, label string, stats *metrics.StreamStatistics) error {
+func Validate(dir string, label string, m *metrics.StreamMetrics) error {
 	total_streams := 0
 	total_covers := 0
 	total_metadata := 0
@@ -103,9 +103,9 @@ func Validate(dir string, label string, stats *metrics.StreamStatistics) error {
 
 	log.Printf("[INFO] (%s) Validated %6d Streams, %6d Covers, %6d Metadata\n", label, total_streams, total_covers, total_metadata)
 
-	stats.ValidatedStreams = total_streams
-	stats.ValidatedImages = total_covers
-	stats.ValidatedMetadata = total_metadata
+	m.ValidatedStreams = total_streams
+	m.ValidatedImages = total_covers
+	m.ValidatedMetadata = total_metadata
 
 	return nil
 }
