@@ -29,10 +29,10 @@ Player.
 24 hours from that time onwards. If `XTREAM_LAUNCH` is properly specified, it will run at every 24
 hours at that specific time.
 
-The `XTREAM_PERIOD` environment variable can be used to run the tool
-more often, for example every 12 hours. It is recommended to only use this after the initial few
-runs have been performed, and only small additions are being made, as this might cause the tool to
-run continuously because the runtime is longer than the period.
+The `XTREAM_PERIOD` environment variable can be used to run the tool more often, for example every
+12 hours. It is recommended to only use this after the initial few runs have been performed, and
+only small additions are being made, as this might cause the tool to run continuously because the
+runtime is longer than the period.
 
 ## Docker Compose
 
@@ -44,6 +44,8 @@ services:
   xtream-api:
     container_name: xtream-api
     image: captainkills/xtream-api:latest
+    # ports:
+    #  - 8080:8080 # Optional for metrics
     environment:
       - XTREAM_URL=...                    # Change to your IPTV URL
       - XTREAM_USERNAME=...               # Change to your IPTV Username
@@ -78,6 +80,7 @@ Here is an example of how to use this tool as a docker container, using the `doc
 docker run -d \
   --name xtream-api \
   --restart unless-stopped \
+  -p 8080:8080 \
   -e XTREAM_URL="..." \
   -e XTREAM_USERNAME="..." \
   -e XTREAM_PASSWORD="..." \
@@ -134,3 +137,44 @@ launched, it will gather all the data from the IPTV provider. Once it has comple
 it will cache all the processed entries into a JSON file in the `/cache` directory. All runs from
 here on out will use these cached entries to check if any entries don't need updating, and can be
 skipped. This will massively save time and requests on successive runs.
+
+## Metrics
+
+The tool provides metrics via the `/metrics` endpoint for [Prometheus](https://prometheus.io/) on
+port `:8080`. This shows various data of the most recent run of the tool. Some metrics are available
+per stream type (`live`/`movies`/`series`), and others are about the selected options or run
+duration. An overview of all the metrics can be found below:
+
+**General Info Metrics:**
+* `xtreamapi_app_info{branch="",commit="",date="",modified="",version=""}`
+
+**Option Metrics:**
+* `xtreamapi_options_disabled{type=""}`
+* `xtreamapi_options_images_enabled`
+* `xtreamapi_options_launch_period`
+* `xtreamapi_options_launch_time`
+* `xtreamapi_options_metadata_enabled`
+* `xtreamapi_options_request_per_minute`
+* `xtreamapi_options_request_timeout`
+
+**Time Metrics:**
+* `xtreamapi_time_duration`
+* `xtreamapi_time_end`
+* `xtreamapi_time_next`
+* `xtreamapi_time_start`
+
+**Stream Metrics:**
+* `xtreamapi_streams_cached{type=""}`
+* `xtreamapi_streams_categories{type=""}`
+* `xtreamapi_streams_failed_streams{type=""}`
+* `xtreamapi_streams_filtered_categories{type=""}`
+* `xtreamapi_streams_filtered_streams{type=""}`
+* `xtreamapi_streams_metadata{type=""}`
+* `xtreamapi_streams_request_rate{type=""}`
+* `xtreamapi_streams_total{type=""}`
+* `xtreamapi_streams_updated_images{type=""}`
+* `xtreamapi_streams_updated_metadata{type=""}`
+* `xtreamapi_streams_updated_streams{type=""}`
+* `xtreamapi_streams_validated_images{type=""}`
+* `xtreamapi_streams_validated_metadata{type=""}`
+* `xtreamapi_streams_validated_streams{type=""}`
