@@ -46,7 +46,8 @@ type StreamMetrics struct {
 	UpdatedImages   int
 	UpdatedMetadata int
 
-	RequestRate float64
+	FailedStreams int
+	RequestRate   float64
 
 	ValidatedStreams  int
 	ValidatedImages   int

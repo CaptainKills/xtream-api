@@ -40,7 +40,8 @@ type PrometheusMetrics struct {
 	updatedImages   *prometheus.GaugeVec
 	updatedMetadata *prometheus.GaugeVec
 
-	requestRate *prometheus.GaugeVec
+	failedStreams *prometheus.GaugeVec
+	requestRate   *prometheus.GaugeVec
 
 	validatedStreams  *prometheus.GaugeVec
 	validatedImages   *prometheus.GaugeVec
@@ -218,6 +219,13 @@ func registerStreamMetrics(reg prometheus.Registerer) {
 		Subsystem: SUBSYSTEM_STREAM,
 		Name:      "updated_metadata",
 		Help:      "The number of updated metadata during the most recent run",
+	}, []string{TYPE})
+
+	export.failedStreams = promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: NAMESPACE,
+		Subsystem: SUBSYSTEM_STREAM,
+		Name:      "failed_streams",
+		Help:      "The number of failed stream exports during the most recent run",
 	}, []string{TYPE})
 
 	export.requestRate = promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{

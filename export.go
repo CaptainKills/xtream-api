@@ -27,6 +27,7 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, state *m
 	updated_streams := 0
 	updated_images := 0
 	updated_nfos := 0
+	failed_streams := 0
 
 	if len(*streams) == 0 {
 		log.Printf("[INFO] (%s) No available streams for export\n", label)
@@ -62,6 +63,7 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, state *m
 		updated_stream, updated_image, updated_nfo, err := stream.Export(client, dir)
 		if err != nil {
 			log.Printf("[ERROR] (%s) Failed to export Streams (%d): %v\n", label, id, err)
+			failed_streams++
 			continue
 		}
 
@@ -102,6 +104,7 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, state *m
 	m.UpdatedStreams = updated_streams
 	m.UpdatedImages = updated_images
 	m.UpdatedMetadata = updated_nfos
+	m.FailedStreams = failed_streams
 	m.RequestRate = client.GetRequestRate()
 
 	return nil

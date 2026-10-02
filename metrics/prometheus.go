@@ -79,6 +79,7 @@ func ExportMetrics() {
 		export.updatedImages.WithLabelValues(label).Set(float64(stream.UpdatedImages))
 		export.updatedMetadata.WithLabelValues(label).Set(float64(stream.UpdatedMetadata))
 
+		export.failedStreams.WithLabelValues(label).Set(float64(stream.FailedStreams))
 		export.requestRate.WithLabelValues(label).Set(stream.RequestRate)
 
 		export.validatedStreams.WithLabelValues(label).Set(float64(stream.ValidatedStreams))
