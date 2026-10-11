@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/CaptainKills/xtream-api/api"
+	"github.com/CaptainKills/xtream-api/metrics"
 )
 
 const (
@@ -22,10 +23,11 @@ var (
 	directorySeries      = filepath.Join(directoryRoot, "series")
 )
 
-func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, state *map[int]*State, dir string, label string) error {
+func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, state *map[int]*State, dir string, label string, m *metrics.StreamMetrics) error {
 	updated_streams := 0
 	updated_images := 0
 	updated_nfos := 0
+	failed_streams := 0
 
 	if len(*streams) == 0 {
 		log.Printf("[INFO] (%s) No available streams for export\n", label)
@@ -61,6 +63,7 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, state *m
 		updated_stream, updated_image, updated_nfo, err := stream.Export(client, dir)
 		if err != nil {
 			log.Printf("[ERROR] (%s) Failed to export Streams (%d): %v\n", label, id, err)
+			failed_streams++
 			continue
 		}
 
@@ -97,6 +100,12 @@ func Export[T api.Stream](client *api.XtreamClient, streams *map[int]T, state *m
 	}
 
 	log.Printf("[INFO] (%s) Streams Processed: %d, Streams Updated: %d, Images Updated: %d, Metadata Updated: %d\n", label, length, updated_streams, updated_images, updated_nfos)
+
+	m.UpdatedStreams = updated_streams
+	m.UpdatedImages = updated_images
+	m.UpdatedMetadata = updated_nfos
+	m.FailedStreams = failed_streams
+	m.RequestRate = client.GetRequestRate()
 
 	return nil
 }
